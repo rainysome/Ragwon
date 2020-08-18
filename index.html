@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>락원</title>
         <style>
-            #label
+            .label
             {
                 width: 20%;
                 float: left;
@@ -17,7 +17,11 @@
     </head>
     
     <body>
-        <div id="label">인구</div><div id="label">count</div>
+        <div class="label">인구</div><div class="label" id="Population">
+            <script>
+                document.getElementById("Population").value = count
+            </script>
+        </div>
         <center>
         <input type="button" id="Button1" value="Hello, world!" onclick="Button1_Click()" style="font-size:20px; width:50%; height:fit-content; position:relative;">
         </center>
