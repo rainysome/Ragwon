@@ -19,7 +19,7 @@
     
     <body>
         <div class="namespace">인구</div>
-        <div><input type="text" class="namespace" id="Population"></div>
+        <div class="namespace" id="Population"></div>
         <br>
         <center>
         <input type="button" id="Button1" value="Hello, world!" onclick="Button1_Click()" style="font-size:20px; width:50%; height:fit-content; position:relative;">
@@ -32,7 +32,7 @@
         {
             count++;
             document.getElementById("Button1").value = "Clicked " + count + " time(s)";
-            document.getElementById("Population").value = count;
+            document.getElementById("Population").textContent = count;
         }
     </script>
 </html>
