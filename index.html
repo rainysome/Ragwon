@@ -5,12 +5,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>락원</title>
         <style>
-            .namespace
+            .container
+            {
+                clear: both;
+            }
+            .txt
             {
                 width: 20%;
                 float: left;
                 text-align: center;
-                background: rosybrown;
+                background: lightpink;
                 font-size: 20px;
                 border: 0;
             }
@@ -18,12 +22,15 @@
     </head>
     
     <body>
-        <div class="namespace">인구</div>
-        <div class="namespace" id="Population">0</div>
-        <br>
-        <center>
-        <input type="button" id="Button1" value="Hello, world!" onclick="Button1_Click()" style="font-size:20px; width:50%; height:fit-content; position: absolute; left: 0">
-        </center>
+        <div class="container">
+            <div class="txt">인구</div>
+            <div class="txt" id="txtPopulation">100</div>
+        </div>
+        <div class="container">
+            <center>
+                <input type="button" id="Button1" value="Hello, world!" onclick="Button1_Click()" style="font-size:20px; width:50%; height:fit-content;">
+            </center>
+        </div>
     </body>
     
     <script>
