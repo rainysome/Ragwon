@@ -51,12 +51,12 @@
     <script>
         let Hunters = [];    // 재산, 총알, 음식, 사냥능력, 탐험능력, 농사능력, 누적잉여음식
 
-        let Hunting = {"MonsterHP": 100, "BulletDamage": 10, "DeathRate": 0.05, "ChipMultiplier": 1.5};
+        let Hunting = {"MonsterHP": 100, "BulletDamage": 5, "DeathRate": 0.05, "ChipMultiplier": 1.5};
         let Farming = {"Productivity": 4};
-        let Exploration = {"BulletQuantity": 20, "DiscoveryRate": 0.5};
+        let Exploration = {"BulletQuantity": 20, "DiscoveryRate": 0.2};
 
         const Job = {"Hunter": 0, "Explorer": 1, "Farmer": 2, "Worker": 3};
-        let Market = {"FoodPrice": 10, "BulletPrice": 2, "FoodQuantity": 0, "BulletQuantity": 0};
+        let Market = {"FoodPrice": 10, "BulletPrice": 10, "FoodQuantity": 0, "BulletQuantity": 0, "FormerFoodPrice": 10, "FormerBulletPrice": 10};
 
         let Wage = 0;
 
@@ -75,7 +75,7 @@
             let i;
             for (i = 0; i < 100; i++)
             {
-                Hunters[i] = {"Chips": 20, "Bullets": 10, "Foods": 1, "HuntingAbility": 1 + Math.random(), "ExplorationAbility": 1 + Math.random(), "FarmingAbility": 1 + Math.random(), "FoodSurplus": 0};
+                Hunters[i] = {"Chips": 0, "Bullets": 10, "Foods": 1, "HuntingAbility": 1 + Math.random(), "ExplorationAbility": 1 + Math.random(), "FarmingAbility": 1 + Math.random(), "FoodSurplus": 0};
             }
         }
 
@@ -166,10 +166,6 @@
             let i;
             for (i = 0; i < Hunters.length; i++)
             {
-                if (Hunters[i].Foods > 2)
-                {
-                    TotalSupply += Hunters[i].Foods - 2;
-                }
                 if (MaxChip < Hunters[i].Chips)
                 {
                     MaxChip = Hunters[i].Chips;
@@ -178,7 +174,7 @@
 
             for (i = 0; i <= MaxChip; i++)
             {
-                SupplyCurve.push(TotalSupply);
+                SupplyCurve.push(0);
                 DemandCurve.push(0);
             }
 
@@ -204,11 +200,20 @@
                         }
                         break;
 
+                    case 2:
+                        break;
+
                     default:
+                        //for (let j = Math.ceil(Market.FoodPrice * 2 / Farming.Productivity / Hunters[i].FarmingAbility); j <= MaxChip; j++)
+                        for (let j = 0; j <= MaxChip; j++)
+                        {
+                            SupplyCurve[j] += Hunters[i].Foods - 2;
+                        }
                         break;
                 }
             }
-
+            console.log(DemandCurve);
+            console.log(SupplyCurve);
             let Price = 0;
             for (Price = 0; Price <= MaxChip; Price++)
             {
@@ -222,9 +227,9 @@
                 Price = MaxChip;
             }
             TotalDemand = DemandCurve[Price];
+            TotalSupply = SupplyCurve[Price];
 
             console.log(Price, TotalDemand, TotalSupply);
-            Market.FoodPrice = Price;
             Market.FoodQuantity = Math.min(TotalDemand, TotalSupply);
 
             for (i = 0; i < Hunters.length; i++)
@@ -248,6 +253,7 @@
                         TotalDemand--;
                     }
                 }
+                //else if (Hunters[i].Foods > 2 && Price >= Math.ceil(Market.FoodPrice * 2 / Farming.Productivity / Hunters[i].FarmingAbility))
                 else if (Hunters[i].Foods > 2)
                 {
                     let tmp = Math.min(Hunters[i].Foods - 2, TotalSupply);
@@ -256,6 +262,8 @@
                     TotalSupply -= tmp;
                 }
             }
+            Market.FormerFoodPrice = Market.FoodPrice;
+            Market.FoodPrice = Price;
         }
 
         function BulletMarket()
@@ -286,15 +294,26 @@
             {
                 let SupplierPrice = Math.ceil(Market.FoodPrice * 2 / Exploration.DiscoveryRate / Exploration.BulletQuantity / Hunters[i].HuntingAbility);
                 let ConsumerPrice = Math.floor(Hunting.ChipMultiplier * Hunting.BulletDamage * Hunters[i].HuntingAbility);
-                for (let j = 0; j <= Hunters[i].Chips; j++)
+                for (let j = 0; j <= MaxChip; j++)
                 {
+                    let qs = 0;
+                    let qd = 0;
                     if (j >= SupplierPrice)
                     {
-                        SupplyCurve[j] += Hunters[i].Bullets;
+                        qs = Hunters[i].Bullets;
                     }
                     if (j <= ConsumerPrice)
                     {
-                        DemandCurve[j] += Math.floor(Hunters[i].Chips / j);
+                        qd = Math.floor(Hunters[i].Chips / j);
+                    }
+                    let netq = qd - qs;
+                    if (netq > 0)
+                    {
+                        DemandCurve[j] += netq;
+                    }
+                    else if (netq < 0)
+                    {
+                        SupplyCurve[j] -= netq;
                     }
                 }
             }
@@ -315,6 +334,7 @@
             TotalSupply = SupplyCurve[Price];
 
             console.log(Price, TotalDemand, TotalSupply);
+            Market.FormerBulletPrice = Market.BulletPrice;
             Market.BulletPrice = Price;
             Market.BulletQuantity = Math.min(TotalDemand, TotalSupply);
 
@@ -329,15 +349,13 @@
                 {
                     Hunters[i].Bullets += NetDemand;
                     Hunters[i].Chips -= NetDemand * Price;
-                    TotalDemand -= Math.floor(Hunters[i].Chips / Price);
-                    TotalSupply -= Hunters[i].Bullets;
+                    TotalDemand -= NetDemand;
                 }
                 else if (NetDemand < 0 && Price >= Math.ceil(Market.FoodPrice * 2 / Exploration.DiscoveryRate / Exploration.BulletQuantity / Hunters[i].HuntingAbility))
                 {
                     Hunters[i].Bullets += NetDemand;
                     Hunters[i].Chips -= NetDemand * Price;
-                    TotalDemand -= Math.floor(Hunters[i].Chips / Price);
-                    TotalSupply -= Hunters[i].Bullets;
+                    TotalSupply += NetDemand;
                 }
             }
         }
@@ -359,6 +377,10 @@
                             Hunters.splice(i, 1);
                             i--;
                         }
+                        
+                        //Hunters.splice(i, 1);
+                        //i--;
+                        
                         break;
                     
                     case 1:
@@ -378,12 +400,12 @@
             let len = Hunters.length;
             for (let i = 0; i < len; i++)
             {
-                if (Hunters[i].FoodSurplus >= 10)
+                if (Hunters[i].FoodSurplus >= 5)
                 {
                     Hunters.push({"Chips": Math.floor(Hunters[i].Chips / 2), "Bullets": Math.floor(Hunters[i].Bullets / 2), "Foods": 1, "HuntingAbility": 1 + Math.random(), "ExplorationAbility": 1 + Math.random(), "FarmingAbility": 1 + Math.random(), "FoodSurplus": 0});
                     Hunters[i].Chips -= Math.floor(Hunters[i].Chips / 2);
                     Hunters[i].Bullets -= Math.floor(Hunters[i].Bullets / 2);
-                    Hunters[i].FoodSurplus -= 10;
+                    Hunters[i].FoodSurplus -= 5;
                 }
             }
         }
