@@ -34,9 +34,9 @@
 	</head>
 	
 	<body>
-		<canvas id="glcanvas" style="width: 100vw; height: 100vh;">
+		<canvas id="canvas">
 			브라우저가 <code>&lt;canvas&gt;</code> 요소를 지원하지 않습니다.
-		</canvas>
+        </canvas>
 	</body>
 	
 	<script>		
@@ -56,13 +56,17 @@
 
 		function main()
 		{
+            canvas = document.getElementById("canvas");
+            canvas.width = document.body.clientWidth;
+            canvas.height = document.body.clientHeight;
+            ctx = canvas.getContext("2d");
             cc = new CCC(10);
             cc.c = 102;
-            document.writeln(cc.c);
-            alert(cc.c);
+            ctx.fillStyle = "red";
+            ctx.font = "48px serif";
+            ctx.fillText(cc.c, 10, 60);
             dd = new CCC(12);
-            alert(CCC.c);
-            document.writeln(CCC.c);
+            ctx.fillText(CCC.c, 10, 120);
         }
 
 		main();
