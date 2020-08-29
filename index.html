@@ -47,11 +47,19 @@
             {
                 this.x = x;
             }
+            get io()
+            {
+                return this.x*2;
+            }
         }
+        CCC.c = 101;
 
 		function main()
 		{
             cc = new CCC(10);
+            cc.c = 102;
+            alert(cc.c);
+            dd = new CCC(12);
             alert(CCC.c);
         }
 
