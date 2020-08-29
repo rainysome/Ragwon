@@ -1,217 +1,60 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-16">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>락원</title>
-        <style>
-            html, body
-            {
-                margin: 0;
-                height: 100%;
-                overflow: hidden;
-            }
-            .container
-            {
-                clear: both;
-            }
-            .txt
-            {
-                width: 20%;
-                float: left;
-                text-align: center;
-                background: lightpink;
-                font-size: 20px;
-                border: 0;
-            }
-        </style>
+	<head>
+		<meta charset="utf-16">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>락원</title>
+		<style>
+			html, body
+			{
+				margin: 0;
+				height: 100%;
+				overflow: hidden;
+			}
+			.container
+			{
+				clear: both;
+			}
+			.txt
+			{
+				width: 20%;
+				float: left;
+				text-align: center;
+				background: lightpink;
+				font-size: 20px;
+				border: 0;
+			}
+		</style>
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js" integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ==" crossorigin="anonymous" defer>
+		<script>
+			window.onresize = function() { Resize(); }
         </script>
-
-        <script id="shader-fs" type="x-shader/x-fragment">
-            void main(void)
-            {
-                gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-            }
-        </script>
-
-        <script id="shader-vs" type="x-shader/x-vertex">
-            attribute vec3 aVertexPosition;
-            uniform mat4 uMVMatrix;
-            uniform mat4 uPMatrix;
-
-            void main(void)
-            {
-                gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-            }
-        </script>
-
-        <script>
-            window.onresize = function() { Resize(); }
-        </script>
-    </head>
-    
-    <body onload="main();">
-        <canvas id="glcanvas" style="width: 100vw; height: 100vh;">
-            브라우저가 <code>&lt;canvas&gt;</code> 요소를 지원하지 않습니다.
-        </canvas>
-    </body>
-    
-    <script>
-        let gl;
-        let canvas;
-        let SquareVerticesBuffer;
-        let VertexPositionAttribute;
-        let ShaderProgram;
-
-        function main()
+        
+        <!--<script src="./source.js"></script>-->
+	</head>
+	
+	<body>
+		<canvas id="glcanvas" style="width: 100vw; height: 100vh;">
+			브라우저가 <code>&lt;canvas&gt;</code> 요소를 지원하지 않습니다.
+		</canvas>
+	</body>
+	
+	<script>		
+        class CCC
         {
-            Initialize();
-            InitShader();
-            InitBuffers();
-            DrawScene();
-        }
-
-        function Resize()
-        {
-            gl.viewport(0, 0, canvas.width, canvas.height);
-            DrawScene();
-        }
-
-        function Initialize()
-        {
-            canvas = document.getElementById("glcanvas");
-            gl = InitWebGL(canvas);
-
-            if (gl)
+            static c = 100;
+            constructor(x)
             {
-                gl.clearColor(0.0, 0.0, 0.0, 1.0);
-                gl.enable(gl.DEPTH_TEST);
-                gl.depthFunc(gl.LEQUAL);
-                gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+                this.x = x;
             }
         }
 
-        function InitWebGL(canvas)
-        {
-            gl = null;
-
-            try
-            {
-                gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-            }
-            catch(e) {}
-
-            if (!gl)
-            {
-                alert("WebGL을 지원하지 않습니다.");
-                gl = null;
-            }
-
-            return gl;
+		function main()
+		{
+            cc = new CCC(10);
+            alert(CCC.c);
         }
 
-        function InitShader()
-        {
-            let FragmentShader = GetShader(gl, "shader-fs");
-            let VertexShader = GetShader(gl, "shader-vs");
-
-            ShaderProgram = gl.createProgram();
-            gl.attachShader(ShaderProgram, VertexShader);
-            gl.attachShader(ShaderProgram, FragmentShader);
-            gl.linkProgram(ShaderProgram);
-
-            if (!gl.getProgramParameter(ShaderProgram, gl.LINK_STATUS))
-            {
-                alert("셰이더 프로그램 초기화에 실패했습니다.");
-            }
-
-            gl.useProgram(ShaderProgram);
-
-            VertexPositionAttribute = gl.getAttribLocation(ShaderProgram, "aVertexPosition");
-            gl.enableVertexAttribArray(VertexPositionAttribute);
-        }
-
-        function GetShader(gl, id)
-        {
-            let ShaderScript, theSource, CurrentChild, Shader;
-
-            ShaderScript = document.getElementById(id);
-
-            if (!ShaderScript)
-            {
-                return null;
-            }
-
-            theSource = "";
-            CurrentChild = ShaderScript.firstChild;
-
-            while (CurrentChild)
-            {
-                if (CurrentChild.nodeType == CurrentChild.TEXT_NODE)
-                {
-                    theSource += CurrentChild.textContent;
-                }
-                CurrentChild = CurrentChild.nextSibling;
-            }
-
-            if (ShaderScript.type == "x-shader/x-fragment")
-            {
-                Shader = gl.createShader(gl.FRAGMENT_SHADER);
-            }
-            else if (ShaderScript.type == "x-shader/x-vertex")
-            {
-                Shader = gl.createShader(gl.VERTEX_SHADER);
-            }
-            else
-            {
-                return null;
-            }
-
-            gl.shaderSource(Shader, theSource);
-            gl.compileShader(Shader);
-
-            if (!gl.getShaderParameter(Shader, gl.COMPILE_STATUS))
-            {
-                alert("셰이더 컴파일 실패 : " + gl.getShaderInfoLog(Shader));
-                return null;
-            }
-
-            return Shader;
-        }
-
-        function InitBuffers()
-        {
-            SquareVerticesBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, SquareVerticesBuffer);
-
-            let vertices = [
-                1.0, 1.0, 0.0,
-                -1.0, 1.0, 0.0,
-                1.0, -1.0, 0.0,
-                -1.0, -1.0, 0.0
-            ];
-
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-        }
-
-        function DrawScene()
-        {
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-            let ProjectionMatrix = mat4.create();
-            mat4.perspective(ProjectionMatrix, 45 * Math.PI / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, 100.0);
-            
-            let ModelViewMatrix = mat4.create();
-            mat4.translate(ModelViewMatrix, ModelViewMatrix, [-0.0, 0.0, -6.0]);
-            
-            gl.bindBuffer(gl.ARRAY_BUFFER, SquareVerticesBuffer);
-            gl.vertexAttribPointer(VertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
-
-            gl.uniformMatrix4fv(gl.getUniformLocation(ShaderProgram, "uPMatrix"), false, ProjectionMatrix);
-            gl.uniformMatrix4fv(gl.getUniformLocation(ShaderProgram, "uMVMatrix"), false, ModelViewMatrix);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        }
-    </script>
+		main();
+	</script>
 </html>
