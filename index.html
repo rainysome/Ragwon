@@ -42,10 +42,9 @@
 	<script>
         class Foo
         {
-            cc;
+            static cc;
             constructor(f)
             {
-                this.cc = "bye";
                 this.foo = f;
             }
 
@@ -54,6 +53,7 @@
                 return this.foo;
             }
         }
+        Foo.cc = "bye";
 		function main()
 		{
             f = new Foo("hello");
