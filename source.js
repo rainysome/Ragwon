@@ -21,7 +21,7 @@ class Tile
 		this.Y = y;
 	}
 
-	IsLand()
+	get IsLand()
 	{
 		if (tAltitude >= TRLANDALTITUDE)
 			return true;
@@ -35,8 +35,8 @@ class Tile
 		return [[1, 0], [r, -1], [r - 1, -1], [-1, 0], [r - 1, 1], [r, 1] ];
 	}
 
-	TRMAXALTITUDE = 4;
-	TRLANDALTITUDE = 2;	// 2 이상이면 땅이다.
+	static TRMAXALTITUDE = 4;
+	static TRLANDALTITUDE = 2;	// 2 이상이면 땅이다.
 
 	X;
 	Y;
@@ -56,6 +56,13 @@ class Tile
 	cTotalPrecipitation;	// 총 강수량은 대체로 위도가 중위도일수록, 고도가 낮을수록, 바다에 가까울수록 많다.
 	cPrecipitationRange;	// 여름에 강수량이 많으면 (+), 겨울에 강수량이 많으면 (-).
 };
+
+Tile.TRMAXALTITUDE = 4;
+Tile.TRLANDALTITUDE = 2;	// 2 이상이면 땅이다.
+Tile.IsContinent = false;	// 대륙이면 true, 섬이나 바다면 false.
+Tile.IsShore = false;		// 해안선에 인접해 있으면 true.
+Tile.LandmassNumber = -1;		// 땅덩이의 번호. Map 클래스에 땅덩이의 번호와 땅덩이의 면적이 짝지어져 있다.
+Tile.tAltitude = 0;
 
 class Edge
 {
@@ -238,6 +245,8 @@ class Edge
 		}
 	}
 }
+
+Edge.isRiver = false;
 
 class Civilization
 {
