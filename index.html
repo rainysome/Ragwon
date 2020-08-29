@@ -5,6 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>락원</title>
         <style>
+            html, body
+            {
+                margin: 0;
+                height: 100%;
+                overflow: hidden;
+            }
             .container
             {
                 clear: both;
@@ -22,392 +28,66 @@
     </head>
     
     <body onload="Initialize();">
-        <div class="container">
-            <div class="txt">인구</div>
-            <div class="txt" id="txtPopulation">100</div>
-        </div>
-        <div class="container">
-            <div class="txt">음식 균형 가격</div>
-            <div class="txt" id="txtFoodPrice">0</div>
-        </div>
-        <div class="container">
-            <div class="txt">음식 균형 거래량</div>
-            <div class="txt" id="txtFoodQuantity">0</div>
-        <div class="container">
-            <div class="txt">총알 균형 가격</div>
-            <div class="txt" id="txtBulletPrice">0</div>
-        </div>
-        <div class="container">
-            <div class="txt">총알 균형 거래량</div>
-            <div class="txt" id="txtBulletQuantity">0</div>
-        </div>
-        <div class="container">
-            <center>
-                <input type="button" id="ButtonNextTurn" value="Next Turn" onclick="ButtonNextTurn_Click()" style="font-size:20px; width:50%; height:fit-content;">
-            </center>
-        </div>
+        <canvas id="glcanvas" style="width: 100%; height: 100%;">
+            브라우저가 <code>&lt;canvas&gt;</code> 요소를 지원하지 않습니다.
+        </canvas>
     </body>
     
     <script>
-        let Hunters = [];    // 재산, 총알, 음식, 사냥능력, 탐험능력, 농사능력, 누적잉여음식
-
-        let Hunting = {"MonsterHP": 100, "BulletDamage": 5, "DeathRate": 0.05, "ChipMultiplier": 1.5};
-        let Farming = {"Productivity": 4};
-        let Exploration = {"BulletQuantity": 20, "DiscoveryRate": 0.2};
-
-        const Job = {"Hunter": 0, "Explorer": 1, "Farmer": 2, "Worker": 3};
-        let Market = {"FoodPrice": 10, "BulletPrice": 10, "FoodQuantity": 0, "BulletQuantity": 0, "FormerFoodPrice": 10, "FormerBulletPrice": 10};
-
-        let Wage = 0;
-
-        function ButtonNextTurn_Click()
-        {
-            NextTurn();
-            document.getElementById("txtPopulation").textContent = Hunters.length;
-            document.getElementById("txtFoodPrice").textContent = Market.FoodPrice;
-            document.getElementById("txtFoodQuantity").textContent = Market.FoodQuantity;
-            document.getElementById("txtBulletPrice").textContent = Market.BulletPrice;
-            document.getElementById("txtBulletQuantity").textContent = Market.BulletQuantity;
-        }
+        let gl;
 
         function Initialize()
         {
-            let i;
-            for (i = 0; i < 100; i++)
+            let canvas = document.getElementById("glcanvas");
+            gl = InitWebGL(canvas);
+
+            if (gl)
             {
-                Hunters[i] = {"Chips": 0, "Bullets": 10, "Foods": 1, "HuntingAbility": 1 + Math.random(), "ExplorationAbility": 1 + Math.random(), "FarmingAbility": 1 + Math.random(), "FoodSurplus": 0};
+                gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                gl.enable(gl.DEPTH_TEST);
+                gl.depthFunc(gl.LEQUAL);
+                gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
             }
         }
 
-        function NextTurn()
+        function InitWebGL(canvas)
         {
-            Work();
-            FoodMarket();
-            BulletMarket();
-            Consume();
-            Reproduce();
+            gl = null;
+
+            try
+            {
+                gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+            }
+            catch(e) {}
+
+            if (!gl)
+            {
+                alert("WebGL을 지원하지 않습니다.");
+                gl = null;
+            }
+
+            return gl;
         }
 
-        function Work()
+        function InitShader()
         {
-            let i;
-            for (i = 0; i < Hunters.length; i++)
+            let FragmentShader = GetShader(gl, "shader-fs");
+            let VertexShader = GetShader(gl, "shader-vs");
+
+            ShaderProgram = gl.createProgram();
+            gl.attachShader(ShaderProgram, VertexShader);
+            gl.attachShader(ShaderProgram, FragmentShader);
+            gl.linkProgram(ShaderProgram);
+
+            if (!gl.getProgramParameter(ShaderProgram, gl.LINK_STATUS))
             {
-                let job = JobSelection(Hunters[i]);
-                switch (job)
-                {
-                    case Job.Hunter:
-                        if (Math.random() < Hunting.DeathRate / Hunters[i].HuntingAbility)
-                        {
-                            Hunters.splice(i, 1);
-                            i--;
-                            break;
-                        }
-                        Hunters[i].Bullets -= Math.ceil(Hunting.MonsterHP / Hunting.BulletDamage / Hunters[i].HuntingAbility);
-                        Hunters[i].Chips += Math.round(Hunting.MonsterHP * Hunters[i].HuntingAbility);
-                        break;
-                    case Job.Explorer:
-                        if (Math.random() < Exploration.DiscoveryRate * Hunters[i].ExplorationAbility)
-                        {
-                            Hunters[i].Bullets += Exploration.BulletQuantity;
-                        }
-                        break;
-                    case Job.Farmer:
-                        Hunters[i].Foods += Math.round(Farming.Productivity * Hunters[i].FarmingAbility);
-                        break;
-                    case Job.Worker:
-                        Hunters[i].Chips += Wage;
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        function JobSelection(h)
-        {
-            let E = Array(Object.keys(Job).length);
-
-            let BulletRequired = Math.ceil(Hunting.MonsterHP / Hunting.BulletDamage / h.HuntingAbility);
-            if (h.Bullets < BulletRequired)
-            {
-                E[Job.Hunter] = -1;
-            }
-            else
-            {
-                //E[Job.Hunter] = Hunting.MonsterHP * (Hunting.ChipMultiplier - Hunting.DeathRate / h.HuntingAbility * h.Chips) - BulletRequired * Market.BulletPrice;
-                E[Job.Hunter] = Hunting.MonsterHP * Hunting.ChipMultiplier - BulletRequired * Market.BulletPrice;
-            }
-            E[Job.Explorer] = Exploration.BulletQuantity * Exploration.DiscoveryRate * h.ExplorationAbility * Market.BulletPrice;
-            E[Job.Farmer] = Farming.Productivity * Market.FoodPrice * h.FarmingAbility;
-            E[Job.Worker] = Wage;
-
-            let j = 0;
-            let i;
-            for (i = 1; i < Object.keys(Job).length; i++)
-            {
-                if (E[i] > E[j])
-                {
-                    j = i;
-                }
-            }
-            return j;
-        }
-
-        function FoodMarket()
-        {
-            let SupplyCurve = [];
-            let DemandCurve = [];
-
-            let MaxChip = 0;
-            let TotalSupply = 0;
-            let TotalDemand = 0;
-
-            let i;
-            for (i = 0; i < Hunters.length; i++)
-            {
-                if (MaxChip < Hunters[i].Chips)
-                {
-                    MaxChip = Hunters[i].Chips;
-                }
+                alert("셰이더 프로그램 초기화에 실패했습니다.");
             }
 
-            for (i = 0; i <= MaxChip; i++)
-            {
-                SupplyCurve.push(0);
-                DemandCurve.push(0);
-            }
+            gl.useProgram(ShaderProgram);
 
-            for (i = 0; i < Hunters.length; i++)
-            {
-                switch (Hunters[i].Foods)
-                {
-                    case 0:
-                        for (let j = Hunters[i].Chips; j > Math.floor(Hunters[i].Chips / 2); j--)
-                        {
-                            DemandCurve[j] += 1;
-                        }
-                        for (let j = 0; j <= Math.floor(Hunters[i].Chips / 2); j++)
-                        {
-                            DemandCurve[j] += 2;
-                        }
-                        break;
-                    
-                    case 1:
-                        for (let j = 0; j <= Hunters[i].Chips; j++)
-                        {
-                            DemandCurve[j] += 1;
-                        }
-                        break;
-
-                    case 2:
-                        break;
-
-                    default:
-                        //for (let j = Math.ceil(Market.FoodPrice * 2 / Farming.Productivity / Hunters[i].FarmingAbility); j <= MaxChip; j++)
-                        for (let j = 0; j <= MaxChip; j++)
-                        {
-                            SupplyCurve[j] += Hunters[i].Foods - 2;
-                        }
-                        break;
-                }
-            }
-            console.log(DemandCurve);
-            console.log(SupplyCurve);
-            let Price = 0;
-            for (Price = 0; Price <= MaxChip; Price++)
-            {
-                if (SupplyCurve[Price] >= DemandCurve[Price])
-                {
-                    break;
-                }
-            }
-            if (Price > MaxChip)
-            {
-                Price = MaxChip;
-            }
-            TotalDemand = DemandCurve[Price];
-            TotalSupply = SupplyCurve[Price];
-
-            console.log(Price, TotalDemand, TotalSupply);
-            Market.FoodQuantity = Math.min(TotalDemand, TotalSupply);
-
-            for (i = 0; i < Hunters.length; i++)
-            {
-                if (TotalSupply <= 0 || TotalDemand <= 0)
-                {
-                    break;
-                }
-                if (Hunters[i].Foods < 2 && Hunters[i].Chips >= Price)
-                {
-                    if (Hunters[i].Foods == 0 && Hunters[i].Chips >= 2 * Price && TotalDemand >= 2)
-                    {
-                        Hunters[i].Chips -= 2 * Price;
-                        Hunters[i].Foods += 2;
-                        TotalDemand -= 2;
-                    }
-                    else
-                    {
-                        Hunters[i].Chips -= Price;
-                        Hunters[i].Foods++;
-                        TotalDemand--;
-                    }
-                }
-                //else if (Hunters[i].Foods > 2 && Price >= Math.ceil(Market.FoodPrice * 2 / Farming.Productivity / Hunters[i].FarmingAbility))
-                else if (Hunters[i].Foods > 2)
-                {
-                    let tmp = Math.min(Hunters[i].Foods - 2, TotalSupply);
-                    Hunters[i].Chips += Price * tmp;
-                    Hunters[i].Foods -= tmp;
-                    TotalSupply -= tmp;
-                }
-            }
-            Market.FormerFoodPrice = Market.FoodPrice;
-            Market.FoodPrice = Price;
-        }
-
-        function BulletMarket()
-        {
-            let SupplyCurve = [];           // 가격에 따른 공급량
-            let DemandCurve = [];           // 가격에 따른 수요량
-
-            let MaxChip = 0;
-            let TotalSupply = 0;
-            let TotalDemand = 0;
-
-            let i;
-            for (i = 0; i < Hunters.length; i++)
-            {
-                if (MaxChip < Hunters[i].Chips)
-                {
-                    MaxChip = Hunters[i].Chips;
-                }
-            }
-
-            for (i = 0; i <= MaxChip; i++)
-            {
-                SupplyCurve.push(0);
-                DemandCurve.push(0);
-            }
-
-            for (i = 0; i < Hunters.length; i++)
-            {
-                let SupplierPrice = Math.ceil(Market.FoodPrice * 2 / Exploration.DiscoveryRate / Exploration.BulletQuantity / Hunters[i].HuntingAbility);
-                let ConsumerPrice = Math.floor(Hunting.ChipMultiplier * Hunting.BulletDamage * Hunters[i].HuntingAbility);
-                for (let j = 0; j <= MaxChip; j++)
-                {
-                    let qs = 0;
-                    let qd = 0;
-                    if (j >= SupplierPrice)
-                    {
-                        qs = Hunters[i].Bullets;
-                    }
-                    if (j <= ConsumerPrice)
-                    {
-                        qd = Math.floor(Hunters[i].Chips / j);
-                    }
-                    let netq = qd - qs;
-                    if (netq > 0)
-                    {
-                        DemandCurve[j] += netq;
-                    }
-                    else if (netq < 0)
-                    {
-                        SupplyCurve[j] -= netq;
-                    }
-                }
-            }
-
-            let Price = 0;
-            for (Price = 0; Price <= MaxChip; Price++)
-            {
-                if (SupplyCurve[Price] >= DemandCurve[Price])
-                {
-                    break;
-                }
-            }
-            if (Price > MaxChip)
-            {
-                Price = MaxChip;
-            }
-            TotalDemand = DemandCurve[Price];
-            TotalSupply = SupplyCurve[Price];
-
-            console.log(Price, TotalDemand, TotalSupply);
-            Market.FormerBulletPrice = Market.BulletPrice;
-            Market.BulletPrice = Price;
-            Market.BulletQuantity = Math.min(TotalDemand, TotalSupply);
-
-            for (i = 0; i < Hunters.length; i++)
-            {
-                if (TotalSupply <= 0 || TotalDemand <= 0)
-                {
-                    break;
-                }
-                let NetDemand = Math.floor(Hunters[i].Chips / Price) - Hunters[i].Bullets;
-                if (NetDemand > 0 && Price <= Math.floor(Hunting.ChipMultiplier * Hunting.BulletDamage * Hunters[i].HuntingAbility))
-                {
-                    Hunters[i].Bullets += NetDemand;
-                    Hunters[i].Chips -= NetDemand * Price;
-                    TotalDemand -= NetDemand;
-                }
-                else if (NetDemand < 0 && Price >= Math.ceil(Market.FoodPrice * 2 / Exploration.DiscoveryRate / Exploration.BulletQuantity / Hunters[i].HuntingAbility))
-                {
-                    Hunters[i].Bullets += NetDemand;
-                    Hunters[i].Chips -= NetDemand * Price;
-                    TotalSupply += NetDemand;
-                }
-            }
-        }
-
-        function Consume()
-        {
-            let i;
-            for (i = 0; i < Hunters.length; i++)
-            {
-                switch (Hunters[i].Foods)
-                {
-                    case 0:
-                        if (Hunters[i].FoodSurplus > 0)
-                        {
-                            Hunters[i].FoodSurplus--;
-                        }
-                        else
-                        {
-                            Hunters.splice(i, 1);
-                            i--;
-                        }
-                        
-                        //Hunters.splice(i, 1);
-                        //i--;
-                        
-                        break;
-                    
-                    case 1:
-                        Hunters[i].Foods--;
-                        break;
-
-                    default:
-                        Hunters[i].Foods -= 2;           // 음식은 안 먹으면 상한다.
-                        Hunters[i].FoodSurplus++;
-                        break;
-                }
-            }
-        }
-
-        function Reproduce()
-        {
-            let len = Hunters.length;
-            for (let i = 0; i < len; i++)
-            {
-                if (Hunters[i].FoodSurplus >= 5)
-                {
-                    Hunters.push({"Chips": Math.floor(Hunters[i].Chips / 2), "Bullets": Math.floor(Hunters[i].Bullets / 2), "Foods": 1, "HuntingAbility": 1 + Math.random(), "ExplorationAbility": 1 + Math.random(), "FarmingAbility": 1 + Math.random(), "FoodSurplus": 0});
-                    Hunters[i].Chips -= Math.floor(Hunters[i].Chips / 2);
-                    Hunters[i].Bullets -= Math.floor(Hunters[i].Bullets / 2);
-                    Hunters[i].FoodSurplus -= 5;
-                }
-            }
+            VertexPositionAttribute = gl.getAttribLocation(ShaderProgram, "aVertexPosition");
+            gl.enableVertexAttribArray(VertexPositionAttribute);
         }
     </script>
 </html>
