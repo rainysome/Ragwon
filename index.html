@@ -53,7 +53,7 @@
                 return this.foo;
             }
 
-            static get Y()
+            static Y()
             {
                 return "bye";
             }
@@ -77,7 +77,7 @@
             ctx.fillStyle = "red";
             ctx.font = "48pt serif";
             ctx.fillText(f.X, 10, 60);
-            ctx.fillText(Foo.Y, 10, 120);
+            ctx.fillText(Foo.Y(), 10, 120);
         }
 
         function BackingScale(context)
