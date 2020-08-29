@@ -46,25 +46,42 @@
                 gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
             }
         </script>
+
+        <script>
+            window.onresize = function() { Resize(); }
+        </script>
     </head>
     
     <body onload="main();">
-        <canvas id="glcanvas" style="width: 100%; height: 100%;">
+        <canvas id="glcanvas" style="width: 100vw; height: 100vh;">
             브라우저가 <code>&lt;canvas&gt;</code> 요소를 지원하지 않습니다.
         </canvas>
     </body>
     
     <script>
         let gl;
+        let canvas;
+        let SquareVerticesBuffer;
+        let VertexPositionAttribute;
+        let ShaderProgram;
 
         function main()
         {
             Initialize();
+            InitShader();
+            InitBuffers();
+            DrawScene();
+        }
+
+        function Resize()
+        {
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            DrawScene();
         }
 
         function Initialize()
         {
-            let canvas = document.getElementById("glcanvas");
+            canvas = document.getElementById("glcanvas");
             gl = InitWebGL(canvas);
 
             if (gl)
@@ -183,8 +200,18 @@
         {
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-            PerspectiveMatrix = makePerspective(45, )
+            let ProjectionMatrix = mat4.create();
+            mat4.perspective(ProjectionMatrix, 45 * Math.PI / 180, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, 100.0);
             
+            let ModelViewMatrix = mat4.create();
+            mat4.translate(ModelViewMatrix, ModelViewMatrix, [-0.0, 0.0, -6.0]);
+            
+            gl.bindBuffer(gl.ARRAY_BUFFER, SquareVerticesBuffer);
+            gl.vertexAttribPointer(VertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+
+            gl.uniformMatrix4fv(gl.getUniformLocation(ShaderProgram, "uPMatrix"), false, ProjectionMatrix);
+            gl.uniformMatrix4fv(gl.getUniformLocation(ShaderProgram, "uMVMatrix"), false, ModelViewMatrix);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         }
     </script>
 </html>
