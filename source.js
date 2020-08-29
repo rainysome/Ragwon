@@ -13,12 +13,19 @@ const ToggleViewMode =
 	ByPrecipitation : 2
 };
 
+const TRMAXALTITUDE = 4;
+const TRLANDALTITUDE = 2;
+
 class Tile
 {
 	constructor(x, y)
 	{
 		this.X = x;
 		this.Y = y;
+		this.IsContinent = false;
+		this.IsShore = false;
+		this.LandmassNumber = -1;
+		this.tAltitude = 0;
 	}
 
 	get IsLand()
@@ -34,9 +41,6 @@ class Tile
 		r = Mod(y, 2);
 		return [[1, 0], [r, -1], [r - 1, -1], [-1, 0], [r - 1, 1], [r, 1] ];
 	}
-
-	static TRMAXALTITUDE = 4;
-	static TRLANDALTITUDE = 2;	// 2 이상이면 땅이다.
 
 	X;
 	Y;
@@ -57,13 +61,6 @@ class Tile
 	cPrecipitationRange;	// 여름에 강수량이 많으면 (+), 겨울에 강수량이 많으면 (-).
 };
 
-Tile.TRMAXALTITUDE = 4;
-Tile.TRLANDALTITUDE = 2;	// 2 이상이면 땅이다.
-Tile.IsContinent = false;	// 대륙이면 true, 섬이나 바다면 false.
-Tile.IsShore = false;		// 해안선에 인접해 있으면 true.
-Tile.LandmassNumber = -1;		// 땅덩이의 번호. Map 클래스에 땅덩이의 번호와 땅덩이의 면적이 짝지어져 있다.
-Tile.tAltitude = 0;
-
 class Edge
 {
 	Type;
@@ -77,6 +74,7 @@ class Edge
 		this.Type = t;
 		this.X = x;
 		this.Y = y;
+		this.isRiver = false;
 	}
 
 	VertexTiles(width, height)
