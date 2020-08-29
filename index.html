@@ -52,8 +52,13 @@
             {
                 return this.foo;
             }
+
+            static get Y()
+            {
+                return "bye";
+            }
         }
-        Foo.prototype.cc = "bye";
+        
 		function main()
 		{
             f = new Foo("hello");
@@ -72,7 +77,7 @@
             ctx.fillStyle = "red";
             ctx.font = "48pt serif";
             ctx.fillText(f.X, 10, 60);
-            ctx.fillText(Foo.prototype.cc, 10, 120);
+            ctx.fillText(Foo.Y, 10, 120);
         }
 
         function BackingScale(context)
