@@ -42,7 +42,7 @@
 	<script>
         class Foo
         {
-            static cc;
+            cc = "byye";
             constructor(f)
             {
                 this.foo = f;
@@ -53,7 +53,7 @@
                 return this.foo;
             }
         }
-        Foo.cc = "bye";
+        Foo.prototype.cc = "bye";
 		function main()
 		{
             f = new Foo("hello");
@@ -72,7 +72,7 @@
             ctx.fillStyle = "red";
             ctx.font = "48pt serif";
             ctx.fillText(f.X, 10, 60);
-            ctx.fillText(Foo.cc, 10, 120);
+            ctx.fillText(Foo.prototype.cc, 10, 120);
         }
 
         function BackingScale(context)
