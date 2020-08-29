@@ -39,9 +39,22 @@
         </canvas>
 	</body>
 	
-	<script>		
+	<script>
+        class Foo
+        {
+            constructor(f)
+            {
+                this.foo = f;
+            }
+
+            get X()
+            {
+                return this.foo;
+            }
+        }
 		function main()
 		{
+            f = new Foo("hello");
             canvas = document.getElementById("canvas");
             w = document.body.clientWidth;
             h = document.body.clientHeight;
@@ -56,7 +69,7 @@
 
             ctx.fillStyle = "red";
             ctx.font = "48pt serif";
-            ctx.fillText(canvas.width, 10, 60);
+            ctx.fillText(f.X, 10, 60);
             ctx.fillText(canvas.height, 10, 120);
         }
 
