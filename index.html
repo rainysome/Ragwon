@@ -40,34 +40,16 @@
 	</body>
 	
 	<script>		
-        class CCC
-        {
-            c = 100;
-            constructor(x)
-            {
-                this.x = x;
-            }
-            get io()
-            {
-                return this.x*2;
-            }
-        }
-        CCC.c = 101;
-
 		function main()
 		{
             canvas = document.getElementById("canvas");
             canvas.width = document.body.clientWidth;
             canvas.height = document.body.clientHeight;
             ctx = canvas.getContext("2d");
-            cc = new CCC(10);
-            cc.c = 102;
             ctx.fillStyle = "red";
             ctx.font = "48px serif";
-            ctx.fillText(cc.c, 10, 60);
-            dd = new CCC(12);
-            ctx.fillText(CCC.c, 10, 120);
-            ctx.fillRect(0, 0, 100, 100);
+            ctx.fillText(canvas.width, 10, 60);
+            ctx.fillText(canvas.height, 10, 120);
         }
 
 		main();
