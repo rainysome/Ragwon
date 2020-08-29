@@ -43,16 +43,17 @@
 		function main()
 		{
             canvas = document.getElementById("canvas");
-            canvas.width = document.body.clientWidth;
-            canvas.height = document.body.clientHeight;
+            w = document.body.clientWidth;
+            h = document.body.clientHeight;
+            scale = BackingScale();
+
+            canvas.width = w * scale;
+            canvas.height = h * scale;
+            canvas.style.width = w + "px";
+            canvas.style.height = h + "px";
             ctx = canvas.getContext("2d");
-            scale = BackingScale(ctx);
-            if (scale > 1)
-            {
-                canvas.width = canvas.width * scale;
-                canvas.height = canvas.height * scale;
-                ctx = canvas.getContext("2d");
-            }
+            ctx.setTransform(scale, 0, 0, scale, 0, 0);
+
             ctx.fillStyle = "red";
             ctx.font = "48pt serif";
             ctx.fillText(canvas.width, 10, 60);
