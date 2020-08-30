@@ -897,7 +897,7 @@ function TouchEnd(evt)
 	}
 }
 
-function Draw(timestamp)
+function Draw()
 {
 	//window.requestAnimationFrame(Draw);
 
@@ -944,6 +944,8 @@ function Draw(timestamp)
 			IsAdditionalDrawingNeeded = false;
 		IsRedrawingNeeded = false;
 	}
+
+	setTimeout(Draw, 50);
 }
 		
 function DrawMap()
