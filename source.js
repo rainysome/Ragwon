@@ -1,3 +1,5 @@
+"use strict"
+
 const EdgeType =
 {
 	Vertical : 0,
@@ -1001,7 +1003,7 @@ function DrawMap()
 			x0 = temp[0];
 			y0 = temp[1];
 
-			pts = [ [(x0 - a0 / 2.0), (y0 - a0 / 2.0 / Math.sqrt(3))],
+			let pts = [ [(x0 - a0 / 2.0), (y0 - a0 / 2.0 / Math.sqrt(3))],
 										[(x0 - a0 / 2.0), (y0 + a0 / 2.0 / Math.sqrt(3))],
 										[(x0), (y0 + a0 / Math.sqrt(3))],
 										[(x0 + a0 / 2.0), (y0 + a0 / 2.0 / Math.sqrt(3))],
