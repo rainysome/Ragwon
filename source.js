@@ -16,6 +16,12 @@ const ToggleViewMode =
 const TRMAXALTITUDE = 4;
 const TRLANDALTITUDE = 2;
 
+function AngleOffset(y)
+{
+	let r = Mod(y, 2);
+	return [[1, 0], [r, -1], [r - 1, -1], [-1, 0], [r - 1, 1], [r, 1] ];
+}
+
 class Tile
 {
 	constructor(x, y)
@@ -30,18 +36,12 @@ class Tile
 
 	get IsLand()
 	{
-		if (tAltitude >= TRLANDALTITUDE)
+		if (this.tAltitude >= TRLANDALTITUDE)
 			return true;
 		else
 			return false;
 	}
-
-	AngleOffset(y)
-	{
-		r = Mod(y, 2);
-		return [[1, 0], [r, -1], [r - 1, -1], [-1, 0], [r - 1, 1], [r, 1] ];
-	}
-
+/*
 	X;
 	Y;
 
@@ -59,16 +59,11 @@ class Tile
 	cTemperatureRange;	// 기온 범위는 대체로 고도가 높을수록, 바다에서 멀수록 크다.
 	cTotalPrecipitation;	// 총 강수량은 대체로 위도가 중위도일수록, 고도가 낮을수록, 바다에 가까울수록 많다.
 	cPrecipitationRange;	// 여름에 강수량이 많으면 (+), 겨울에 강수량이 많으면 (-).
+	*/
 };
 
 class Edge
 {
-	Type;
-	X;
-	Y;
-
-	isRiver = false;
-	
 	constructor(t, x, y)
 	{
 		this.Type = t;
@@ -79,29 +74,29 @@ class Edge
 
 	VertexTiles(width, height)
 	{
-		r = Mod(Y, 2);
-		t1, t2;
+		let r = Mod(Y, 2);
+		let t1, t2;
 
-		if (Type == EdgeType.Vertical)
+		if (this.Type == EdgeType.Vertical)
 		{
 			// 01이면 00과 02
 			// 00이면 -1-1과 -11
-			t1 = [Mod(X + r - 1, width), Y - 1];
-			t2 = [Mod(X + r - 1, width), Y + 1];
+			t1 = [Mod(this.X + r - 1, width), this.Y - 1];
+			t2 = [Mod(this.X + r - 1, width), this.Y + 1];
 		}
-		else if (Type == EdgeType.LeftToRight)
+		else if (this.Type == EdgeType.LeftToRight)
 		{
 			// 11이면 20과 01
 			// 12이면 11과 02
-			t1 = [Mod(X + r, width), Y - 1];
-			t2 = [Mod(X - 1, width), Y];
+			t1 = [Mod(this.X + r, width), this.Y - 1];
+			t2 = [Mod(this.X - 1, width), this.Y];
 		}
 		else
 		{
 			// 01이면 00과 11
 			// 12이면 01과 22
-			t1 = [Mod(X + r - 1, width), Y - 1];
-			t2 = [Mod(X + 1, width), Y];
+			t1 = [Mod(this.X + r - 1, width), this.Y - 1];
+			t2 = [Mod(this.X + 1, width), this.Y];
 		}
 		if (t1[1] < 0)
 			return [t2];
@@ -113,29 +108,29 @@ class Edge
 
 	SideTiles(width, height)
 	{
-		r = Mod(Y, 2);
-		t1, t2;
+		let r = Mod(this.Y, 2);
+		let t1, t2;
 
-		if (Type == EdgeType.Vertical)
+		if (this.Type == EdgeType.Vertical)
 		{
 			// 10이면 00과 10
 			// 11이면 01과 11
-			t1 = [Mod(X - 1, width), Y];
-			t2 = [X, Y];
+			t1 = [Mod(this.X - 1, width), this.Y];
+			t2 = [this.X, this.Y];
 		}
-		else if (Type == EdgeType.LeftToRight)
+		else if (this.Type == EdgeType.LeftToRight)
 		{
 			// 01이면 00과 01
 			// 12이면 01과 12
-			t1 = [Mod(X + r - 1, width), Y - 1];
-			t2 = [X, Y];
+			t1 = [Mod(this.X + r - 1, width), this.Y - 1];
+			t2 = [this.X, this.Y];
 		}
 		else
 		{
 			// 01이면 10과 01
 			// 02이면 01과 02
-			t1 = [Mod(X + r, width), Y - 1];
-			t2 = [X, Y];
+			t1 = [Mod(this.X + r, width), this.Y - 1];
+			t2 = [this.X, this.Y];
 		}
 		if (t1[1] < 0)
 			return [t2];
@@ -145,47 +140,32 @@ class Edge
 			return [t1, t2];
 	}
 
-	static EdgeBetweenTiles(x1, y1, x2, y2, width)
-	{
-		r;
-		if (y1 > y2 || (y1 == y2 && Mod(x1 - x2, width) == 1))
-		{
-			r = Mod(y1, 2);
-			return [(y1 - y2) * Mod(x2 + 2 - x1 - r, width), x1, y1];
-		}
-		else
-		{
-			r = Mod(y2, 2);
-			return [(y2 - y1) * Mod(x1 + 2 - x2 - r, width), x2, y2];
-		}
-	}
-
 	OtherEdges(width, height, onetiley)
 	{
-		r = Mod(Y, 2);
-		t1, t2;
-		e1, e2;
+		let r = Mod(this.Y, 2);
+		let t1, t2;
+		let e1, e2;
 
-		if (Type == EdgeType.Vertical)
+		if (this.Type == EdgeType.Vertical)
 		{
 			// 01이면 00과 02
 			// 00이면 -1-1과 -11
-			t1 = [Mod(X + r - 1, width), Y - 1];
-			t2 = [Mod(X + r - 1, width), Y + 1];
+			t1 = [Mod(this.X + r - 1, width), this.Y - 1];
+			t2 = [Mod(this.X + r - 1, width), this.Y + 1];
 		}
-		else if (Type == EdgeType.LeftToRight)
+		else if (this.Type == EdgeType.LeftToRight)
 		{
 			// 11이면 20과 01
 			// 12이면 11과 02
-			t1 = [Mod(X + r, width), Y - 1];
-			t2 = [Mod(X - 1, width), Y];
+			t1 = [Mod(this.X + r, width), this.Y - 1];
+			t2 = [Mod(this.X - 1, width), this.Y];
 		}
 		else
 		{
 			// 01이면 00과 11
 			// 12이면 01과 22
-			t1 = [Mod(X + r - 1, width), Y - 1];
-			t2 = [Mod(X + 1, width), Y];
+			t1 = [Mod(this.X + r - 1, width), this.Y - 1];
+			t2 = [Mod(this.X + 1, width), this.Y];
 		}
 		if (t1[1] < 0 || t2[1] >= height)
 			return [];
@@ -193,50 +173,50 @@ class Edge
 		{
 			if (t1[1] == onetiley)		// 시작하는 타일이 위에 있을 경우
 			{
-				if (Type == EdgeType.Vertical)
+				if (this.Type == EdgeType.Vertical)
 				{
 					// 10이면 01과 01
 					// 01이면 02와 02
-					e1 = [EdgeType.LeftToRight, Mod(X + r - 1, width), Y + 1];
-					e2 = [EdgeType.RightToLeft, Mod(X + r - 1, width), Y + 1];
+					e1 = [EdgeType.LeftToRight, Mod(this.X + r - 1, width), this.Y + 1];
+					e2 = [EdgeType.RightToLeft, Mod(this.X + r - 1, width), this.Y + 1];
 				}
-				else if (Type == EdgeType.LeftToRight)
+				else if (this.Type == EdgeType.LeftToRight)
 				{
 					// 11이면 우하향01과 수직11
 					// 12이면 우하향02와 수직12
-					e1 = [EdgeType.RightToLeft, Mod(X - 1, width), Y];
-					e2 = [EdgeType.Vertical, X, Y];
+					e1 = [EdgeType.RightToLeft, Mod(this.X - 1, width), this.Y];
+					e2 = [EdgeType.Vertical, this.X, this.Y];
 				}
 				else
 				{
 					// 01이면 우상향11과 수직11
 					// 02이면 우상향12와 수직12
-					e1 = [EdgeType.LeftToRight, Mod(X + 1, width), Y];
-					e2 = [EdgeType.Vertical, Mod(X + 1, width), Y];
+					e1 = [EdgeType.LeftToRight, Mod(this.X + 1, width), this.Y];
+					e2 = [EdgeType.Vertical, Mod(this.X + 1, width), this.Y];
 				}
 			}
 			else	// 시작하는 타일이 아래에 있을 경우
 			{
-				if (Type == EdgeType.Vertical)
+				if (this.Type == EdgeType.Vertical)
 				{
 					// 11이면 우하향01과 우상향11
 					// 12이면 우하향02와 우상향12
-					e1 = [EdgeType.RightToLeft, Mod(X - 1, width), Y];
-					e2 = [EdgeType.LeftToRight, X, Y];
+					e1 = [EdgeType.RightToLeft, Mod(this.X - 1, width), this.Y];
+					e2 = [EdgeType.LeftToRight, this.X, this.Y];
 				}
-				else if (Type == EdgeType.LeftToRight)
+				else if (this.Type == EdgeType.LeftToRight)
 				{
 					// 01이면 수직10과 우하향01
 					// 12이면 수직11과 우하향12
-					e1 = [EdgeType.Vertical, Mod(X + r, width), Y - 1];
-					e2 = [EdgeType.RightToLeft, X, Y];
+					e1 = [EdgeType.Vertical, Mod(this.X + r, width), this.Y - 1];
+					e2 = [EdgeType.RightToLeft, this.X, this.Y];
 				}
 				else
 				{
 					// 01이면 수직10과 우상향01
 					// 02이면 수직01과 우상향02
-					e1 = [EdgeType.Vertical, Mod(X + r, width), Y - 1];
-					e2 = [EdgeType.LeftToRight, X, Y];
+					e1 = [EdgeType.Vertical, Mod(this.X + r, width), this.Y - 1];
+					e2 = [EdgeType.LeftToRight, this.X, this.Y];
 				}
 			}
 			return [e1, e2];
@@ -244,42 +224,42 @@ class Edge
 	}
 }
 
-Edge.isRiver = false;
-
-class Civilization
+function EdgeBetweenTiles(x1, y1, x2, y2, width)
 {
-	Population;
-	Position = [0, 0];
-
-	constructor(pop, x, y)
+	let r;
+	if (y1 > y2 || (y1 == y2 && Mod(x1 - x2, width) == 1))
 	{
-		this.Population = pop;
-		this.Position[0] = x;
-		this.Position[1] = y;
+		r = Mod(y1, 2);
+		return [(y1 - y2) * Mod(x2 + 2 - x1 - r, width), x1, y1];
+	}
+	else
+	{
+		r = Mod(y2, 2);
+		return [(y2 - y1) * Mod(x1 + 2 - x2 - r, width), x2, y2];
 	}
 }
 
+class Civilization
+{
+	constructor(pop, x, y)
+	{
+		this.Population = pop;
+		this.Position = [x, y];
+	}
+}
+
+const LANDRATIO = 0.25;		// 전체 넓이 대 땅 넓이의 비율.
+const MINCONTINENTAREA = 40;		// 대륙이 되기 위한 최소 넓이.
+
+const PRDEFAULT = 0.0008;		// 0.0015 모든 타일의 기본 땅 생성 확률. 클수록 해안선이 복잡해진다.
+const PRLANDCOEFF = 0.16;		// 0.08 기존의 땅 주변에서 또다른 땅이 생겨날 확률. 클수록 하나의 땅덩이가 넓어진다.
+const PRROUGHCOEFF = 0.08;		// 0.2 기존의 땅이 높아질 확률. 낮으면 저지대가 많이 생성된다.
+const PRTRYRIVER = 0.3;		// 조건이 되는 연안 타일들 중 실제로 강을 만들기 시작할 확률.
+const PRTRYRIVERBRANCH = 0.06;	// 강이 분기할 확률.
+const PRCOMPLEXCOASTLINE = 4;	// 복잡한 해안선을 만드는 루프를 반복할 횟수.
+
 class Map
 {
-	LANDRATIO = 0.25;		// 전체 넓이 대 땅 넓이의 비율.
-	MINCONTINENTAREA = 40;		// 대륙이 되기 위한 최소 넓이.
-
-	PRDEFAULT = 0.0008;		// 0.0015 모든 타일의 기본 땅 생성 확률. 클수록 해안선이 복잡해진다.
-	PRLANDCOEFF = 0.16;		// 0.08 기존의 땅 주변에서 또다른 땅이 생겨날 확률. 클수록 하나의 땅덩이가 넓어진다.
-	PRROUGHCOEFF = 0.08;		// 0.2 기존의 땅이 높아질 확률. 낮으면 저지대가 많이 생성된다.
-	PRTRYRIVER = 0.3;		// 조건이 되는 연안 타일들 중 실제로 강을 만들기 시작할 확률.
-	PRTRYRIVERBRANCH = 0.06;	// 강이 분기할 확률.
-	PRCOMPLEXCOASTLINE = 4;	// 복잡한 해안선을 만드는 루프를 반복할 횟수.
-
-	Width;
-	Height;
-
-	Tiles;
-	Rivers;
-	LandmassAreas = [];
-
-	PlayerCivilization = new Civilization();
-	PlayerPosition = [];
 	// public int[,] AIPositions;
 	
 	// 무작위 맵 생성자. 육각형 타일을 기본으로 한다.
@@ -288,6 +268,10 @@ class Map
 		// 좌우길이만 정해주면 상하길이는 루트 3으로 나눠준다.
 		this.Width = width;
 		this.Height = Math.round(width / Math.sqrt(3));
+
+		this.LandmassAreas = [];
+		//this.PlayerCivilization = new Civilization(10);
+		this.PlayerPosition = [];
 		
 		// 타일과 강들을 초기화시켜준다.
 		this.Tiles = new Array(this.Width);
@@ -315,68 +299,69 @@ class Map
 		{
 			let sx = Math.round(Math.random() * this.Width);
 			let sy = Math.round(Math.random() * this.Height);
-			Tiles[sx][sy].tAltitude = Tile.TRLANDALTITUDE;
+			this.Tiles[sx][sy].tAltitude = TRLANDALTITUDE;
 		}
 
 		// 씨앗으로부터 대륙을 키워나간다.
-		bool NoContinents = true;
+		let NoContinents = true;
 		while (NoContinents)
 		{
 			while (true)
 			{
 				// 땅의 총 넓이를 세고, 비율이 LANDRATIO 이상이면 나간다.
-				int LandArea = 0;
-				for (int x = 0; x < Width; x++)
+				let LandArea = 0;
+				for (let x = 0; x < this.Width; x++)
 				{
-					for (int y = 0; y < Height; y++)
+					p_tiles[x] = new Float32Array(this.Height);
+					for (let y = 0; y < this.Height; y++)
 					{
-						p_tiles[x, y] = Map.PRDEFAULT;
-						if (Tiles[x, y].IsLand)
+						p_tiles[x][y] = PRDEFAULT;
+						if (this.Tiles[x][y].IsLand)
 							LandArea++;
 					}
 				}
-				if (LandArea >= Width * Height * LANDRATIO)
+				if (LandArea >= this.Width * this.Height * LANDRATIO)
 					break;
 
 				// 각 타일의 땅이 생길 확률을 구한다.
-				for (int x = 0; x < Width; x++)
+				for (let x = 0; x < this.Width; x++)
 				{
-					for (int y = 0; y < Height; y++)
+					for (let y = 0; y < this.Height; y++)
 					{
-						var v = Neighbors(x, y, 1);
+						let v = Neighbors(x, y, 1);
 
-						for (int i = 0; i < v.Count; i++)
+						for (let i = 0; i < v.length; i++)
 						{
-							int xx = v[i][0];
-							int yy = v[i][1];
-							if (yy >= 0 && yy < Height)
-								p_tiles[Mod(xx, Width), yy] += Math.Min(Tiles[x, y].tAltitude, Tile.TRLANDALTITUDE + 0.1 * (Tiles[x, y].tAltitude - Tile.TRLANDALTITUDE)) * Map.PRLANDCOEFF;
+							let xx = v[i][0];
+							let yy = v[i][1];
+							if (yy >= 0 && yy < this.Height)
+								p_tiles[Mod(xx, this.Width)][yy] += Math.min(this.Tiles[x][y].tAltitude, TRLANDALTITUDE + 0.1 * (this.Tiles[x][y].tAltitude - TRLANDALTITUDE)) * PRLANDCOEFF;
 						}
 
 						v = Neighbors(x, y, 2);
-						for (int i = 0; i < v.Count; i++)
+						for (let i = 0; i < v.length; i++)
 						{
-							int xx = v[i][0];
-							int yy = v[i][1];
-							if (yy >= 0 && yy < Height)
-								p_tiles[Mod(xx, Width), yy] += Math.Min(Tiles[x, y].tAltitude, Tile.TRLANDALTITUDE + 0.1 * (Tiles[x, y].tAltitude - Tile.TRLANDALTITUDE)) * Map.PRLANDCOEFF / 4;
+							let xx = v[i][0];
+							let yy = v[i][1];
+							if (yy >= 0 && yy < this.Height)
+								p_tiles[Mod(xx, this.Width)][yy] += Math.min(this.Tiles[x][y].tAltitude, TRLANDALTITUDE + 0.1 * (this.Tiles[x][y].tAltitude - TRLANDALTITUDE)) * PRLANDCOEFF / 4;
 						}
 					}
 				}
 
 				// 최종 확률에 따라 각 타일을 성장시킨다. 최종 확률은 위도에 따라 보정된다.
-				for (int x = 0; x < Width; x++)
+				for (let x = 0; x < this.Width; x++)
 				{
-					for (int y = 0; y < Height; y++)
+					for (let y = 0; y < this.Height; y++)
 					{
-						double p = rnd.NextDouble();
-						double lat = (double)(Height - 1 - 2 * y) / Height;
-						if (p <= p_tiles[x, y] * (1 - lat * lat * 0.3))
+						let p = Math.random();
+						let lat = (this.Height - 1.0 - 2 * y) / this.Height;
+						if (p <= p_tiles[x][y] * (1 - lat * lat * 0.3))
 						{
-							int r;
-							if (Tiles[x, y].IsLand)
+							let r;
+							if (this.Tiles[x][y].IsLand)
 							{
-								p = rnd.NextDouble();
+								p = Math.random();
 								if (p <= PRROUGHCOEFF)
 									r = 1;
 								else
@@ -384,63 +369,63 @@ class Map
 							}
 							else
 								r = 1;
-							Tiles[x, y].tAltitude = Math.Min(Tiles[x, y].tAltitude + r, Tile.TRMAXALTITUDE);
+							this.Tiles[x][y].tAltitude = Math.min(this.Tiles[x][y].tAltitude + r, TRMAXALTITUDE);
 						}
 					}
 				}
 			}
 
 			// 복잡한 해안선을 만든다.
-			for (int k = 0; k < PRCOMPLEXCOASTLINE; k++)
+			for (let k = 0; k < PRCOMPLEXCOASTLINE; k++)
 			{
-				for (int x = 0; x < Width; x++)
+				for (let x = 0; x < this.Width; x++)
 				{
-					for (int y = 0; y < Height; y++)
+					for (let y = 0; y < this.Height; y++)
 					{
-						var v = Neighbors(x, y, 1);
-						int nn = 0;
-						double p = rnd.NextDouble();
-						for (int i = 0; i < v.Count; i++)
+						let v = Neighbors(x, y, 1);
+						let nn = 0;
+						let p = Math.random();
+						for (let i = 0; i < v.length; i++)
 						{
-							int xx = v[i][0];
-							int yy = v[i][1];
-							if (yy >= 0 && yy < Height && Tiles[Mod(xx, Width), yy].IsLand)
+							let xx = v[i][0];
+							let yy = v[i][1];
+							if (yy >= 0 && yy < this.Height && this.Tiles[Mod(xx, this.Width)][yy].IsLand)
 								nn++;
 						}
-						if ((nn >= 4 && nn <= 5) && Tiles[x, y].IsLand && p <= PRLANDCOEFF / (6 - nn))
-							p_tiles[x, y] = -1;
-						else if ((nn == 1 || nn == 2) && !Tiles[x, y].IsLand && p <= PRLANDCOEFF / nn)
-							p_tiles[x, y] = 1;
+						if ((nn >= 4 && nn <= 5) && this.Tiles[x][y].IsLand && p <= PRLANDCOEFF / (6 - nn))
+							p_tiles[x][y] = -1;
+						else if ((nn == 1 || nn == 2) && !this.Tiles[x][y].IsLand && p <= PRLANDCOEFF / nn)
+							p_tiles[x][y] = 1;
 						else
-							p_tiles[x, y] = 0;
+							p_tiles[x][y] = 0;
 					}
 				}
-				for (int x = 0; x < Width; x++)
+				for (let x = 0; x < this.Width; x++)
 				{
-					for (int y = 0; y < Height; y++)
+					for (let y = 0; y < this.Height; y++)
 					{
-						Tiles[x, y].tAltitude = AB(Tiles[x, y].tAltitude + (int)p_tiles[x, y], 0, Tile.TRMAXALTITUDE);
+						this.Tiles[x][y].tAltitude = AB(this.Tiles[x][y].tAltitude + p_tiles[x][y], 0, TRMAXALTITUDE);
 					}
 				}
 			}
 
 			// flood-fill 알고리즘으로 총 땅덩이의 수를 센다.
-			int LandmassCount = 0;
-			LandmassAreas.Clear();
-			for (int x = 0; x < Width; x++)
+			let LandmassCount = 0;
+			LandmassAreas = [];
+			for (let x = 0; x < this.Width; x++)
 			{
-				for (int y = 0; y < Height; y++)
+				for (let y = 0; y < this.Height; y++)
 				{
-					if (Tiles[x, y].IsLand && Tiles[x, y].LandmassNumber == -1)
+					if (this.Tiles[x][y].IsLand && this.Tiles[x][y].LandmassNumber == -1)
 					{
-						LandmassAreas.Add(FloodFill(x, y, LandmassCount));
+						LandmassAreas.push(FloodFill(x, y, LandmassCount));
 						LandmassCount++;
 					}
 				}
 			}
 
 			// 땅덩이 중 대륙이라고 부를 만한 땅덩이가 없으면 지도를 다시 만든다.
-			for (int i = 0; i < LandmassCount; i++)
+			for (let i = 0; i < LandmassCount; i++)
 			{
 				if (LandmassAreas[i] >= MINCONTINENTAREA)
 					NoContinents = false;
@@ -448,102 +433,111 @@ class Map
 		}
 
 		// 타일의 여러 속성들을 정해준다.
-		for (int x = 0; x < Width; x++)
+		for (let x = 0; x < this.Width; x++)
 		{
-			for (int y = 0; y < Height; y++)
+			for (let y = 0; y < this.Height; y++)
 			{
 				// isContinent 속성을 정해준다.
-				if (Tiles[x, y].IsLand && LandmassAreas[Tiles[x, y].LandmassNumber] >= MINCONTINENTAREA)
-					Tiles[x, y].IsContinent = true;
+				if (this.Tiles[x][y].IsLand && LandmassAreas[this.Tiles[x][y].LandmassNumber] >= MINCONTINENTAREA)
+					this.Tiles[x][y].IsContinent = true;
 
 				// isShore 속성을 정해준다.
 				var v = Neighbors(x, y, 1);
-				for (int i = 0; i < v.Count; i++)
+				for (let i = 0; i < v.length; i++)
 				{
-					int xx = v[i][0];
-					int yy = v[i][1];
-					if (yy >= 0 && yy < Height)
-						if (Tiles[x, y].IsLand ^ Tiles[Mod(xx, Width), yy].IsLand)
-							Tiles[x, y].IsShore = true;
+					let xx = v[i][0];
+					let yy = v[i][1];
+					if (yy >= 0 && yy < this.Height)
+						if (this.Tiles[x][y].IsLand != this.Tiles[Mod(xx, this.Width), yy].IsLand)
+							this.Tiles[x][y].IsShore = true;
 				}
 
 				// 땅 바로 옆에는 심해가 없도록 해준다.
-				if (!Tiles[x, y].IsLand && Tiles[x, y].IsShore)
-					Tiles[x, y].tAltitude = 1;
+				if (!this.Tiles[x][y].IsLand && this.Tiles[x][y].IsShore)
+					this.Tiles[x][y].tAltitude = 1;
 			}
 		}
 
 		// 강을 규칙에 따라 생성시킨다.
 		// 연안 타일에서부터 강을 만들기 시작한다.
-		var ShoreTiles = from t in ArrayExtensions.ToEnumerable(Tiles)
-						 where !t.IsLand && t.IsShore
-						 select new int[] { t.X, t.Y };
+		let ShoreTiles = [];
+		for (let i = 0; i < this.Tiles.length; i++)
+		{
+			for (let j = 0; j < this.Tiles[i].length; j++)
+			{
+				if (!this.Tiles[i][j].IsLand && this.Tiles[i][j].IsShore)
+				{
+					ShoreTiles.push([i, j]);
+				}
+			}
+		}
 
-		Queue<int[]> queue = new Queue<int[]>();
+		let queue = [];
 
 		// 연안을 따라 큐에 강 후보지들을 넣는다.
-		foreach (int[] ss in ShoreTiles)
+		for (let k = 0; k < ShoreTiles.length; k++)
 		{
-			int x = ss[0];
-			int y = ss[1];
-			int oyy = 0;		// 시작 타일의 y좌표.
+			ss = ShoreTiles[k];
+			let x = ss[0];
+			let y = ss[1];
+			let oyy = 0;		// 시작 타일의 y좌표.
 
-			int[] edge = new int[] { };
+			let edge = [];
 
-			var v = Neighbors(x, y, 1);
+			let v = Neighbors(x, y, 1);
 
-			if (v.Count < 6)
+			if (v.length < 6)
 				continue;
 
 			// 바다 타일과 땅 타일 사이의 변을 시작점으로 집어넣는다.
-			for (int i = 0; i < v.Count; i++)
+			for (let i = 0; i < v.length; i++)
 			{
-				if (Tiles[v[i][0],v[i][1]].tAltitude == Tile.TRLANDALTITUDE)
+				if (this.Tiles[v[i][0],v[i][1]].tAltitude == TRLANDALTITUDE)
 				{
-					edge = Edge.EdgeBetweenTiles(x, y, v[i][0], v[i][1], Width);
-					if (Tiles[v[Mod(i + 1, 6)][0], v[Mod(i + 1, 6)][1]].tAltitude == Tile.TRLANDALTITUDE && !Tiles[v[Mod(i - 1, 6)][0], v[Mod(i - 1, 6)][1]].IsLand)
+					edge = EdgeBetweenTiles(x, y, v[i][0], v[i][1], this.Width);
+					if (this.Tiles[v[Mod(i + 1, 6)][0], v[Mod(i + 1, 6)][1]].tAltitude == TRLANDALTITUDE && !this.Tiles[v[Mod(i - 1, 6)][0], v[Mod(i - 1, 6)][1]].IsLand)
 						oyy = v[Mod(i - 1, 6)][1];
-					else if (!Tiles[v[Mod(i + 1, 6)][0], v[Mod(i + 1, 6)][1]].IsLand && Tiles[v[Mod(i - 1, 6)][0], v[Mod(i - 1, 6)][1]].tAltitude == Tile.TRLANDALTITUDE)
+					else if (!this.Tiles[v[Mod(i + 1, 6)][0], v[Mod(i + 1, 6)][1]].IsLand && this.Tiles[v[Mod(i - 1, 6)][0], v[Mod(i - 1, 6)][1]].tAltitude == TRLANDALTITUDE)
 						oyy = v[Mod(i + 1, 6)][1];
-					else if (Tiles[v[Mod(i + 1, 6)][0], v[Mod(i + 1, 6)][1]].tAltitude == Tile.TRLANDALTITUDE && Tiles[v[Mod(i - 1, 6)][0], v[Mod(i - 1, 6)][1]].tAltitude == Tile.TRLANDALTITUDE)
+					else if (this.Tiles[v[Mod(i + 1, 6)][0], v[Mod(i + 1, 6)][1]].tAltitude == TRLANDALTITUDE && this.Tiles[v[Mod(i - 1, 6)][0], v[Mod(i - 1, 6)][1]].tAltitude == TRLANDALTITUDE)
 					{
-						if (rnd.Next(2) == 0)
+						if (Math.random() < 0.5)
 							oyy = v[Mod(i - 1, 6)][1];
 						else
 							oyy = v[Mod(i + 1, 6)][1];
 					}
-					double p = rnd.NextDouble();
+					let p = Math.random();
 					if (p <= PRTRYRIVER)
-						queue.Enqueue([edge[0], edge[1], edge[2], oyy]);
+						queue.push([edge[0], edge[1], edge[2], oyy]);
 				}
 			}
 		}
 		// 큐가 비어있지 않다면 강을 연장할 수 있는지 알아보고 확률에 따라 연장한다.
-		while (queue.Any())
+		while (queue.length > 0)
 		{
-			int[] q = queue.Dequeue();
+			let q = queue.splice(0, 1);
 
-			List<int[]> Candidates = Rivers[q[0], q[1], q[2]].OtherEdges(Width, Height, q[3]);
-			List<double> Scores = new List<double> { 0, 0 };
+			let Candidates = Rivers[q[0]][q[1]][q[2]].OtherEdges(this.Width, this.Height, q[3]);
+			let Scores = [0.0, 0.0];
 
-			if (Candidates.Count < 2)
+			if (Candidates.length < 2)
 				continue;
 
-			List<List<int[]>> Sides = new List<List<int[]>> { Rivers[Candidates[0][0], Candidates[0][1], Candidates[0][2]].SideTiles(Width, Height),
-																Rivers[Candidates[1][0], Candidates[1][1], Candidates[1][2]].SideTiles(Width, Height) };
-			List<List<int[]>> Vertices = new List<List<int[]>> { Rivers[Candidates[0][0], Candidates[0][1], Candidates[0][2]].VertexTiles(Width, Height),
-																Rivers[Candidates[1][0], Candidates[1][1], Candidates[1][2]].VertexTiles(Width, Height) };
-			List<int[]> Bases = new List<int[]> { new int[] { }, new int[] { } };
-			List<int[]> Directs = new List<int[]> { new int[] { }, new int[] { } };
-			List<List<int[]>> NextCandidates = new List<List<int[]>> { new List<int[]> { new int[] { }, new int[] { } }, new List<int[]> { new int[] { }, new int[] { } } };
-			List<List<int[]>> Nears = new List<List<int[]>> { new List<int[]> { new int[] { }, new int[] { } }, new List<int[]> { new int[] { }, new int[] { } } };
+			let Sides = [ Rivers[Candidates[0][0], Candidates[0][1], Candidates[0][2]].SideTiles(this.Width, this.Height),
+																Rivers[Candidates[1][0], Candidates[1][1], Candidates[1][2]].SideTiles(this.Width, this.Height) ];
+			let Vertices = [ Rivers[Candidates[0][0], Candidates[0][1], Candidates[0][2]].VertexTiles(this.Width, this.Height),
+																Rivers[Candidates[1][0], Candidates[1][1], Candidates[1][2]].VertexTiles(this.Width, this.Height) ];
+			let Bases = [[], []]
+			let Directs = [[], []];
+			let NextCandidates = [[[], []], [[], []]];
+			let Nears = [[[], []], [[], []]];
 
-			for (int i = 0; i < 2; i++)
+			for (let i = 0; i < 2; i++)
 			{
-				if (Vertices[i].Count < 2)
+				if (Vertices[i].length < 2)
 					continue;
 
-				if (Vertices[i][0].SequenceEqual(Sides[1 - i][0]) || Vertices[i][0].SequenceEqual(Sides[1 - i][1]))
+				if (Vertices[i][0].every((val, index) => val === Sides[1 - i][0][index]) || Vertices[i][0].every((val, index) => val === Sides[1 - i][1][index]))
 				{
 					Bases[i] = Vertices[i][0];
 					Directs[i] = Vertices[i][1];
@@ -554,84 +548,84 @@ class Map
 					Directs[i] = Vertices[i][0];
 				}
 
-				NextCandidates[i][0] = Edge.EdgeBetweenTiles(Directs[i][0], Directs[i][1], Sides[i][0][0], Sides[i][0][1], Width);
-				NextCandidates[i][1] = Edge.EdgeBetweenTiles(Directs[i][0], Directs[i][1], Sides[i][1][0], Sides[i][1][1], Width);
+				NextCandidates[i][0] = EdgeBetweenTiles(Directs[i][0], Directs[i][1], Sides[i][0][0], Sides[i][0][1], this.Width);
+				NextCandidates[i][1] = EdgeBetweenTiles(Directs[i][0], Directs[i][1], Sides[i][1][0], Sides[i][1][1], this.Width);
 
-				Nears[i] = Neighbors(Directs[i][0], Directs[i][1], 1).Concat(Neighbors(Directs[i][0], Directs[i][1], 2)).ToList();
+				Nears[i] = Neighbors(Directs[i][0], Directs[i][1], 1).concat(Neighbors(Directs[i][0], Directs[i][1], 2));
 
 				// 주변에 저지대가 많을수록 좋은 후보.
-				int NearLandCount = 0;
-				for (int j = 0; j < Nears.Count; j++)
+				let NearLandCount = 0;
+				for (let j = 0; j < Nears[i].length; j++)
 				{
-					if (Tiles[Nears[i][j][0], Nears[i][j][1]].IsLand)
+					if (this.Tiles[Nears[i][j][0]][Nears[i][j][1]].IsLand)
 						NearLandCount++;
-					if (Tiles[Nears[i][j][0], Nears[i][j][1]].tAltitude == Tile.TRLANDALTITUDE)
+					if (this.Tiles[Nears[i][j][0]][Nears[i][j][1]].tAltitude == TRLANDALTITUDE)
 						Scores[i] += 0.05;
 				}
 				Scores[i] /= NearLandCount;
 				// 강이 해안선과 평행하게 흐를 수는 없다.
-				if (!Tiles[Sides[i][0][0], Sides[i][0][1]].IsLand || !Tiles[Sides[i][1][0], Sides[i][1][1]].IsLand)
+				if (!this.Tiles[Sides[i][0][0]][Sides[i][0][1]].IsLand || !this.Tiles[Sides[i][1][0]][Sides[i][1][1]].IsLand)
 					Scores[i] -= 999;
 				// 양쪽 강변의 고도가 낮을수록 좋은 후보.
-				Scores[i] += 0.25 * (Tile.TRMAXALTITUDE - (Tiles[Sides[i][0][0], Sides[i][0][1]].tAltitude + Tiles[Sides[i][1][0], Sides[i][1][1]].tAltitude) / 2);
+				Scores[i] += 0.25 * (TRMAXALTITUDE - (this.Tiles[Sides[i][0][0]][Sides[i][0][1]].tAltitude + this.Tiles[Sides[i][1][0]][Sides[i][1][1]].tAltitude) / 2);
 				// 양쪽 강변의 고도가 차이가 덜 날수록 좋은 후보.
-				Scores[i] -= 0.95 * (Math.Abs(Tiles[Sides[i][0][0], Sides[i][0][1]].tAltitude - Tiles[Sides[i][1][0], Sides[i][1][1]].tAltitude) - 0.5 * (Tile.TRMAXALTITUDE - Tile.TRLANDALTITUDE));
+				Scores[i] -= 0.95 * (Math.abs(this.Tiles[Sides[i][0][0]][Sides[i][0][1]].tAltitude - this.Tiles[Sides[i][1][0]][Sides[i][1][1]].tAltitude) - 0.5 * (TRMAXALTITUDE - TRLANDALTITUDE));
 				// 강을 더 놓았을 때 기존의 강과 연결되는 것은 되도록이면 피할 것.
-				if (Rivers[NextCandidates[i][0][0], NextCandidates[i][0][1], NextCandidates[i][0][2]].isRiver || Rivers[NextCandidates[i][1][0], NextCandidates[i][1][1], NextCandidates[i][1][2]].isRiver)
+				if (Rivers[NextCandidates[i][0][0]][NextCandidates[i][0][1]][NextCandidates[i][0][2]].isRiver || Rivers[NextCandidates[i][1][0]][NextCandidates[i][1][1]][NextCandidates[i][1][2]].isRiver)
 					Scores[i] -= 0.9;
 				// 강은 거꾸로 흐를 수 없다.
-				if (Tiles[Bases[i][0], Bases[i][1]].tAltitude > Tiles[Directs[i][0], Directs[i][1]].tAltitude)
+				if (this.Tiles[Bases[i][0]][Bases[i][1]].tAltitude > this.Tiles[Directs[i][0]][Directs[i][1]].tAltitude)
 					Scores[i] -= 999;
 				// 바다에서 바다로 흐를 수 없다.
-				if (!Tiles[Directs[i][0], Directs[i][1]].IsLand)
+				if (!this.Tiles[Directs[i][0]][Directs[i][1]].IsLand)
 					Scores[i] -= 999;
 
 			}
 			// 두 후보 중 더 확률이 큰 쪽으로 강을 연장하고 두 번째 후보는 더 낮은 확률로 연장된다.
-			double p = rnd.NextDouble();
-			int ii;
+			let p = Math.random();
+			let ii;
 
-			if (Scores[0] > Scores[1] || (Scores[0] == Scores[1] && rnd.Next(2) == 0))
+			if (Scores[0] > Scores[1] || (Scores[0] == Scores[1] && Math.random() < 0.5))
 				ii = 0;
 			else
 				ii = 1;
 
-			if (p <= Scores[ii] && !Rivers[Candidates[ii][0], Candidates[ii][1], Candidates[ii][2]].isRiver)
+			if (p <= Scores[ii] && !Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver)
 			{
-				Rivers[Candidates[ii][0], Candidates[ii][1], Candidates[ii][2]].isRiver = true;
-				queue.Enqueue(new int[] { Candidates[ii][0], Candidates[ii][1], Candidates[ii][2], Bases[ii][1] });
+				Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver = true;
+				queue.push([ Candidates[ii][0], Candidates[ii][1], Candidates[ii][2], Bases[ii][1] ]);
 			}
 			// 두 번째 후보의 확률은 PRTRYRIVER만큼 줄어든다.
-			p = rnd.NextDouble();
+			p = Math.random();
 			ii = 1 - ii;
-			if (p <= Scores[ii] * PRTRYRIVERBRANCH && !Rivers[Candidates[ii][0], Candidates[ii][1], Candidates[ii][2]].isRiver)
+			if (p <= Scores[ii] * PRTRYRIVERBRANCH && !Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver)
 			{
-				Rivers[Candidates[ii][0], Candidates[ii][1], Candidates[ii][2]].isRiver = true;
-				queue.Enqueue(new int[] { Candidates[ii][0], Candidates[ii][1], Candidates[ii][2], Bases[ii][1] });
+				Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver = true;
+				queue.push([ Candidates[ii][0], Candidates[ii][1], Candidates[ii][2], Bases[ii][1] ]);
 			}
 		}
 
 		// 기후 변수들을 할당해준다.
 		// 우선 깊은 바다로부터의 거리를 정해준다.
-		for (int y = 0; y < Height; y++)
+		for (let y = 0; y < this.Height; y++)
 		{
-			for (int x = 0; x < Width; x++)
+			for (let x = 0; x < this.Width; x++)
 			{
-				if (Tiles[x, y].tAltitude == 0)
+				if (this.Tiles[x][y].tAltitude == 0)
 				{
-					int n = 0;
-					int sw = 0;     // 연속된 해안 타일의 수. 특정 개수 이상 연속으로 반복되면 바다 타일과 같은 효과를 가진다.
-					int se = 0;
-					double dw = 0;
-					double de = 0;
+					let n = 0;
+					let sw = 0;     // 연속된 해안 타일의 수. 특정 개수 이상 연속으로 반복되면 바다 타일과 같은 효과를 가진다.
+					let se = 0;
+					let dw = 0;
+					let de = 0;
 					while (true)
 					{
 						n++;
-						if (Mod(n, Width) == 0)
+						if (Mod(n, this.Width) == 0)
 							break;
-						if (Tiles[Mod(x + n, Width), y].tAltitude == 0)
+						if (this.Tiles[Mod(x + n, this.Width)][y].tAltitude == 0)
 							dw = 0;
-						else if (!Tiles[Mod(x + n, Width), y].IsLand)
+						else if (!this.Tiles[Mod(x + n, this.Width)][y].IsLand)
 						{
 							if (++sw >= 3)
 								dw = 0;
@@ -639,12 +633,12 @@ class Map
 						}
 						else
 						{
-							dw += 0.5 * Tiles[Mod(x + n, Width), y].tAltitude;
+							dw += 0.5 * this.Tiles[Mod(x + n, this.Width)][y].tAltitude;
 							sw = 0;
 						}
-						if (Tiles[Mod(x - n, Width), y].tAltitude == 0)
+						if (this.Tiles[Mod(x - n, this.Width)][y].tAltitude == 0)
 							de = 0;
-						else if (!Tiles[Mod(x - n, Width), y].IsLand)
+						else if (!this.Tiles[Mod(x - n, this.Width)][y].IsLand)
 						{
 							if (++se >= 3)
 								de = 0;
@@ -652,38 +646,38 @@ class Map
 						}
 						else
 						{
-							de += 0.5 * Tiles[Mod(x - n, Width), y].tAltitude;
+							de += 0.5 * this.Tiles[Mod(x - n, this.Width)][y].tAltitude;
 							se = 0;
 						}
-						Tiles[Mod(x + n, Width), y].tDistanceFromWest = dw;
-						Tiles[Mod(x - n, Width), y].tDistanceFromEast = de;
+						this.Tiles[Mod(x + n, this.Width), y].tDistanceFromWest = dw;
+						this.Tiles[Mod(x - n, this.Width), y].tDistanceFromEast = de;
 					}
 					break;
 				}
 			}
 		}
 		// 기후 변수를 계산하고, 동시에 자원도 배치한다.
-		for (int x = 0; x < Width; x++)
+		for (let x = 0; x < this.Width; x++)
 		{
-			for (int y = 0; y < Height; y++)
+			for (let y = 0; y < this.Height; y++)
 			{
 				// 유효거리는 서쪽 해안에서부터 잰 거리와 동쪽 해안에서부터 잰 거리를 위도에 따라 합성한 거리이다.
-				double lat = (double)(Height - 1 - 2 * y) / Height;
-				double alpha = (Math.Cos(Math.PI * lat) + 1) / 2;
-				Tiles[x, y].tEffectiveDistance = (Tiles[x, y].tDistanceFromWest * Tiles[x, y].tDistanceFromEast) / (alpha * Tiles[x, y].tDistanceFromWest + (1 - alpha) * Tiles[x, y].tDistanceFromEast + 1);
+				let lat = (this.Height - 1 - 2 * y) / this.Height;
+				let alpha = (Math.cos(Math.PI * lat) + 1) / 2;
+				this.Tiles[x][y].tEffectiveDistance = (this.Tiles[x][y].tDistanceFromWest * this.Tiles[x][y].tDistanceFromEast) / (alpha * this.Tiles[x][y].tDistanceFromWest + (1 - alpha) * this.Tiles[x][y].tDistanceFromEast + 1);
 				// 강수량은 위도가 낮을수록 많은데, 30도 부근에서 최저치가 되도록 보정항이 있고, 유효거리가 멀수록, 고도가 높을수록 추가로 감소한다.
-				Tiles[x, y].cTotalPrecipitation = 15000 * Math.Pow(5, -3 * Math.Abs(lat) / 2) * (1 - 0.95 / ((Math.Abs(lat) - 0.25) * (Math.Abs(lat) - 0.25) * 23 + 1)) * (1 - lat * lat) * Math.Pow(2, -(Tiles[x, y].tEffectiveDistance * 0.11) - (Tiles[x, y].tAltitude - Tile.TRLANDALTITUDE));
+				this.Tiles[x][y].cTotalPrecipitation = 15000 * Math.pow(5, -3 * Math.abs(lat) / 2) * (1 - 0.95 / ((Math.abs(lat) - 0.25) * (Math.abs(lat) - 0.25) * 23 + 1)) * (1 - lat * lat) * Math.pow(2, -(this.Tiles[x][y].tEffectiveDistance * 0.11) - (this.Tiles[x][y].tAltitude - TRLANDALTITUDE));
 				// 강수량 범위는 (서쪽 해안으로부터의 거리)-(동쪽 해안으로부터의 거리)에 따라 부호가 바뀐다.
-				Tiles[x, y].cPrecipitationRange = Tiles[x, y].cTotalPrecipitation * Math.Tanh((Tiles[x, y].tDistanceFromWest - Tiles[x, y].tDistanceFromEast) / 10) * (1 - lat * lat);
+				this.Tiles[x][y].cPrecipitationRange = this.Tiles[x][y].cTotalPrecipitation * Math.tanh((this.Tiles[x][y].tDistanceFromWest - this.Tiles[x][y].tDistanceFromEast) / 10) * (1 - lat * lat);
 				// 평균 온도는 주되게는 위도가 낮을수록 높고, 바닷바람이 적게 불수록 증가하고, 고도가 높을수록 감소한다. 강수량이 많으면 추가적으로 감소한다.
-				Tiles[x, y].cMeanTemperature = Math.Cos(lat * Math.PI / 2) * 68 - Tiles[x, y].cTotalPrecipitation * 0.002 - 5 * (Tiles[x, y].tAltitude - Tile.TRMAXALTITUDE) - 44;
+				this.Tiles[x][y].cMeanTemperature = Math.cos(lat * Math.PI / 2) * 68 - this.Tiles[x][y].cTotalPrecipitation * 0.002 - 5 * (this.Tiles[x][y].tAltitude - TRMAXALTITUDE) - 44;
 				// 온도 범위는 위도가 높아질수록, 해안으로부터의 거리가 멀어질수록 넓어진다.
-				Tiles[x, y].cTemperatureRange = Math.Abs(lat * 11.7 * Math.Pow(Tiles[x, y].tEffectiveDistance * 40000 / Width, 0.2));
+				this.Tiles[x][y].cTemperatureRange = Math.abs(lat * 11.7 * Math.pow(this.Tiles[x][y].tEffectiveDistance * 40000 / this.Width, 0.2));
 				// 식생에 의한 색깔은 강수량에 크게 의존하고 온도에도 의존한다.
-				double VI = Math.Tanh(Math.Max(Tiles[x, y].cTotalPrecipitation / 500 - 0.2, 0));
-				double PolarCapFactor = 0.5 * Math.Tanh(-(Tiles[x, y].cMeanTemperature + Tiles[x, y].cTemperatureRange / 2)) + 0.5;
-				double TundraFactor = 0.5 * Math.Tanh(-(Tiles[x, y].cMeanTemperature + Tiles[x, y].cTemperatureRange / 2) / 2 + 4.5) + 0.5;
-				Tiles[x, y].tVegetationColor = FromHSV(70 * VI + 20 + 30 * TundraFactor, AB(0.75 * VI + 0.25 - 0.3 * TundraFactor - PolarCapFactor, 0, 1), Math.Min(0.37 * VI + 0.85 * (1 - VI) - 0.1 * TundraFactor + PolarCapFactor, 1));
+				let VI = Math.tanh(Math.max(this.Tiles[x][y].cTotalPrecipitation / 500 - 0.2, 0));
+				let PolarCapFactor = 0.5 * Math.tanh(-(this.Tiles[x][y].cMeanTemperature + this.Tiles[x][y].cTemperatureRange / 2)) + 0.5;
+				let TundraFactor = 0.5 * Math.tanh(-(this.Tiles[x][y].cMeanTemperature + this.Tiles[x][y].cTemperatureRange / 2) / 2 + 4.5) + 0.5;
+				this.Tiles[x][y].tVegetationColor = FromHSV(70 * VI + 20 + 30 * TundraFactor, AB(0.75 * VI + 0.25 - 0.3 * TundraFactor - PolarCapFactor, 0, 1), Math.min(0.37 * VI + 0.85 * (1 - VI) - 0.1 * TundraFactor + PolarCapFactor, 1));
 
 				// 식량 자원을 배치한다.
 
@@ -691,77 +685,83 @@ class Map
 		}
 
 		// 플레이어의 위치를 정해준다. AI들도 위치시켜야 한다.
-		var ContinentTiles = from t in ArrayExtensions.ToEnumerable(Tiles)
-							 where t.IsContinent
-							 select new int[] { t.X, t.Y };
-		List<int[]> ct = ContinentTiles.ToList();
-		PlayerPosition = ct[rnd.Next(ct.Count)];
-		PlayerCivilization = new Civilization(100, PlayerPosition[0], PlayerPosition[1]);
+		let ct = [];
+		for (let x = 0; x < this.Tiles.length; x++)
+		{
+			for (let y = 0; y < this.Tiles[x].length; y++)
+			{
+				if (Tiles[x][y].IsContinent)
+				{
+					ct.push([x, y]);
+				}
+			}
+		}
+		PlayerPosition = ct[Math.floor(Math.random() * ct.length)];
+		PlayerCivilization = new Civilization(10, PlayerPosition[0], PlayerPosition[1]);
 	}
 
-	public int FloodFill(int x, int y, int num)
+	FloodFill(x, y, num)
 	{
-		if (Tiles[x, y].tAltitude < Tile.TRLANDALTITUDE)
+		if (this.Tiles[x][y].tAltitude < TRLANDALTITUDE)
 			return 0;
-		int area = 0;
-		Queue<int[]> queue = new Queue<int[]>();
-		queue.Enqueue(new int[] { x, y });
-		while (queue.Any())
+		let area = 0;
+		let queue = [[x, y]];
+		while (queue.length > 0)
 		{
-			int xx, yy;
-			int[] tt = queue.Dequeue();
+			let xx, yy;
+			let tt = queue.splice(0, 1);
 			xx = tt[0];
 			yy = tt[1];
-			int[] west = new int[] { xx, yy };
-			int[] east = new int[] { xx, yy };
-			while (Tiles[Mod((west[0] - 1), Width), west[1]].LandmassNumber == -1 && Tiles[Mod((west[0] - 1), Width), west[1]].IsLand)
+			let west = [ xx, yy ];
+			let east = [ xx, yy ];
+			while (this.Tiles[Mod((west[0] - 1), this.Width)][west[1]].LandmassNumber == -1 && this.Tiles[Mod((west[0] - 1), this.Width)][west[1]].IsLand)
 				west[0]--;
-			while (Tiles[Mod((east[0] + 1), Width), east[1]].LandmassNumber == -1 && Tiles[Mod((east[0] + 1), Width), east[1]].IsLand)
+			while (this.Tiles[Mod((east[0] + 1), this.Width)][east[1]].LandmassNumber == -1 && this.Tiles[Mod((east[0] + 1), this.Width)][east[1]].IsLand)
 				east[0]++;
-			for (int i = west[0]; i <= east[0]; i++)
+			for (let i = west[0]; i <= east[0]; i++)
 			{
-				if (Tiles[Mod(i, Width), yy].LandmassNumber == -1)
+				if (this.Tiles[Mod(i, this.Width)][yy].LandmassNumber == -1)
 				{
-					Tiles[Mod(i, Width), yy].LandmassNumber = num;
+					this.Tiles[Mod(i, this.Width)][yy].LandmassNumber = num;
 					area++;
 				}
-				int r = Mod(yy, 2);
+				let r = Mod(yy, 2);
 				if (yy > 0)
 				{
-					if (Tiles[Mod((i - 1 + r), Width), yy - 1].LandmassNumber == -1 && Tiles[Mod((i - 1 + r), Width), yy - 1].IsLand)
-						queue.Enqueue(new int[] { Mod((i - 1 + r), Width), yy - 1 });
-					else if (Tiles[Mod((i + r), Width), yy - 1].LandmassNumber == -1 && Tiles[Mod((i + r), Width), yy - 1].IsLand)
-						queue.Enqueue(new int[] { Mod((i + r), Width), yy - 1 });
+					if (this.Tiles[Mod((i - 1 + r), this.Width)][yy - 1].LandmassNumber == -1 && this.Tiles[Mod((i - 1 + r), this.Width)][yy - 1].IsLand)
+						queue.push([ Mod((i - 1 + r), this.Width), yy - 1 ]);
+					else if (this.Tiles[Mod((i + r), this.Width)][yy - 1].LandmassNumber == -1 && this.Tiles[Mod((i + r), this.Width)][yy - 1].IsLand)
+						queue.push([ Mod((i + r), this.Width)][yy - 1 ]);
 				}
-				if (yy < Height - 1)
+				if (yy < this.Height - 1)
 				{
-					if (Tiles[Mod((i - 1 + r), Width), yy + 1].LandmassNumber == -1 && Tiles[Mod((i - 1 + r), Width), yy + 1].IsLand)
-						queue.Enqueue(new int[] { Mod((i - 1 + r), Width), yy + 1 });
-					else if (Tiles[Mod((i + r), Width), yy + 1].LandmassNumber == -1 && Tiles[Mod((i + r), Width), yy + 1].IsLand)
-						queue.Enqueue(new int[] { Mod((i + r), Width), yy + 1 });
+					if (this.Tiles[Mod((i - 1 + r), this.Width)][yy + 1].LandmassNumber == -1 && this.Tiles[Mod((i - 1 + r), this.Width)][yy + 1].IsLand)
+						queue.push([ Mod((i - 1 + r), this.Width), yy + 1 ]);
+					else if (this.Tiles[Mod((i + r), this.Width)][yy + 1].LandmassNumber == -1 && this.Tiles[Mod((i + r), this.Width)][yy + 1].IsLand)
+						queue.push([ Mod((i + r), this.Width), yy + 1 ]);
 				}
 			}
 		}
 		return area;
 	}
 
-	public List<int[]> Neighbors(int x, int y, int distance)
+	Neighbors(x, y, distance)
 	{
-		List<int[]> nn = new List<int[]> { };
-		int[] temp = new int[] { x, y };
+		let nn = [];
+		let temp = [ x, y ];
 
 		if (distance == 0)
-			return new List<int[]> { new int[] { x, y } };
+			return [x, y];
 		else
 		{
 			temp[0] -= distance;
-			for (int i = 0; i < 6; i++)
+			for (let i = 0; i < 6; i++)
 			{
-				for (int j = 0; j < distance; j++)
+				for (let j = 0; j < distance; j++)
 				{
-					if (temp[1] >= 0 && temp[1] < Height)
-						nn.Add(new int[] { Mod(temp[0], Width), temp[1] });
-					int[] offset = Tile.AngleOffset(temp[1])[Mod(i - 1, 6)];
+					if (temp[1] >= 0 && temp[1] < this.Height)
+						nn.push([ Mod(temp[0], this.Width), temp[1] ]);
+					let offset = AngleOffset(temp[1])[Mod(i - 1, 6)];
 					temp[0] += offset[0];
 					temp[1] += offset[1];
 				}
@@ -770,12 +770,288 @@ class Map
 		return nn;
 	}
 
-	public void HuntGatherMove(int dx, int dy)
+	HuntGatherMove(dx, dy)
 	{
-		if (Tiles[Mod((PlayerPosition[0] + dx), Width), AB(PlayerPosition[1] + dy, 0, Height - 1)].IsLand)
+		if (this.Tiles[Mod((PlayerPosition[0] + dx), this.Width)][AB(PlayerPosition[1] + dy, 0, this.Height - 1)].IsLand)
 		{
-			PlayerPosition[0] = Mod((PlayerPosition[0] + dx), Width);
-			PlayerPosition[1] = AB(PlayerPosition[1] + dy, 0, Height - 1);
+			PlayerPosition[0] = Mod((PlayerPosition[0] + dx), this.Width);
+			PlayerPosition[1] = AB(PlayerPosition[1] + dy, 0, this.Height - 1);
 		}
 	}
+}
+
+function AB(x, a, b)
+{
+	if (a > b)
+		return a;					// 하한이 상한보다 크면 하한을 리턴한다.
+	else if (x > b)
+		return b;
+	else if (x < a)
+		return a;
+	else
+		return x;
+}
+
+function Mod(a, b)
+{
+	return (a - b * Math.floor(a * 1.0 / b));
+}
+
+let canvas;
+let bf;
+let bmg;
+let RetinaScale = 1;
+
+const MinimumFrameTime = 10;
+
+let IsRedrawingNeeded = false;
+let IsAdditionalDrawingNeeded = false;
+
+let _ScreenWidth;
+let _ScreenHeight;
+
+let _TileSize;
+let _CameraPosition = [0, 0];
+let _V = [0, 0];
+
+let map;
+const MAPWIDTH = 180;
+let IsMouseDown = false;
+
+let TileSize = 24.0;
+let CameraPosition = [0, 0];
+V = [0, 0];
+
+let OldMouse = [0, 0];
+let ToggleView = ToggleViewMode.ByTerrain;
+
+function main()
+{
+	canvas = document.getElementById("canvas");
+	let w = document.body.clientWidth;
+	let h = document.body.clientHeight;
+	RetinaScale = ("devicePixelRatio" in window) ? window.devicePixelRatio : 1;
+
+	canvas.width = w * RetinaScale;
+	canvas.height = h * RetinaScale;
+	canvas.style.width = w + "px";
+	canvas.style.height = h + "px";
+	canvas.getContext("2d").scale(RetinaScale, RetinaScale);
+
+	bf = new OffscreenCanvas(canvas.width, canvas.height);
+	bmg = bf.getContext("2d");
+	
+	worker = new Worker("./worker.js");
+	worker.postMessage({DrawFunc: DrawLoadingScreen}, [bmg, DrawLoadingScreen]);
+	InitializeGame();
+	worker.terminate();
+}
+
+function Draw(timestamp)
+{
+	window.requestAnimationFrame(Draw);
+
+	// 중간에 값이 변경되면 맵이 깨지므로 처음의 변수 값들을 미리 기록해둔다.
+	_ScreenWidth = document.body.clientWidth;
+	_ScreenHeight = document.body.clientHeight;
+	_TileSize = TileSize;
+	_CameraPosition = CameraPosition.slice();
+	_V = V.slice();
+
+	// 다시 그려야 하거나 한 프레임 더 그려야 하면 맵부터 그리고 타일 선택된거 그리고 문명 그리고 인터페이스도 그린다.
+	if (IsRedrawingNeeded || IsAdditionalDrawingNeeded)
+	{
+		DrawMap();
+
+		//canvas.drawImage(bf);
+		if (IsRedrawingNeeded)
+			IsAdditionalDrawingNeeded = true;
+		else
+			IsAdditionalDrawingNeeded = false;
+		IsRedrawingNeeded = false;
+	}
+}
+		
+function DrawMap()
+{
+	let c = "";
+	bmg.clearRect(0, 0, _ScreenWidth, _ScreenHeight);
+	bmg.strokeStyle = FromLegend(ToggleViewMode.ByAltitude, 1);
+	bmg.lineWidth = 0.1 * _TileSize;
+	bmg.lineCap = "round";
+
+	let RiverLines = [];
+
+	// 육각형 타일을 그린다.
+	let xy = PixelToTile(-1, -1);
+	let x, y;
+	let temp = [];
+	let a0 = _TileSize;
+	let x0, y0;
+	for (let i = -1; i < _ScreenWidth / _TileSize + 2; i++)
+	{
+		for (let j = -1; j < _ScreenHeight * 2 / Math.sqrt(3) / _TileSize + 1; j++)
+		{
+			x = Mod(xy[0] + i, map.Width);
+			y = xy[1] + j;
+			if (y < 0 || y >= map.Height)
+				c = "black";
+			else if (map.Tiles[x][y].tAltitude <= 1)
+				c = FromLegend(ToggleViewMode.ByAltitude, map.Tiles[x][y].tAltitude);
+			else
+			{
+				switch (ToggleView)
+				{
+					case ToggleViewMode.ByTemperature:
+						c = FromLegend(ToggleView, map.Tiles[x][y].cMeanTemperature);
+						break;
+					case ToggleViewMode.ByPrecipitation:
+						c = FromLegend(ToggleView, map.Tiles[x][y].cTotalPrecipitation);
+						break;
+					case ToggleViewMode.ByTerrain:
+						//c = FromLegend(ToggleViewMode.ByAltitude, map.Tiles[x, y].tAltitude);
+						c = map.Tiles[x][y].tVegetationColor;
+						break;
+					default:
+						c = "black";
+						break;
+				}
+			}
+
+			temp = TileToPixel(x, y);
+			x0 = temp[0];
+			y0 = temp[1];
+
+			pts = [ [(x0 - a0 / 2.0), (y0 - a0 / 2.0 / Math.sqrt(3))],
+										[(x0 - a0 / 2.0), (y0 + a0 / 2.0 / Math.sqrt(3))],
+										[(x0), (y0 + a0 / Math.sqrt(3))],
+										[(x0 + a0 / 2.0), (y0 + a0 / 2.0 / Math.sqrt(3))],
+										[(x0 + a0 / 2.0), (y0 - a0 / 2.0 / Math.sqrt(3))],
+										[x0, (y0 - a0 / Math.sqrt(3))] ];
+			bmg.fillStyle = c;
+			bmg.beginPath();
+			bmg.moveTo(pts[0][0], pts[0][1]);
+			for (let k = 1; k < 6; k++)
+			{
+				bmg.lineTo(pts[k][0], pts[k][1]);
+			}
+			bmg.closePath();
+			bmg.fill();
+
+			// 강이 될 점의 쌍들을 리스트에 넣어둔다.
+			if (y >= 0 && y < map.Height)
+			{
+				if (map.Rivers[EdgeType.Vertical][x][y].isRiver)
+					RiverLines.Add( [pts[0], pts[1]] );
+				if (map.Rivers[EdgeType.LeftToRight][x][y].isRiver)
+					RiverLines.Add([pts[0], pts[5]]);
+				if (map.Rivers[EdgeType.RightToLeft][x][y].isRiver)
+					RiverLines.Add([pts[5], pts[4]]);
+			}
+		}
+	}
+	
+	// 기록해둔 점의 쌍들로 강을 그린다.
+	bmg.moveTo(RiverLines[0][0], RiverLines[0][1]);
+	for (let i = 1; i < RiverLines.length; i++)
+	{
+		bmg.lineTo(RiverLines[i][0], RiverLines[i][1]);
+	}
+	bmg.stroke();
+}
+
+function DrawLoadingScreen()
+{
+	let str = "Loading.";
+	let i = 0;
+	while (true)
+	{
+		setTimeout(() => {
+			bmg.clearRect(0, 0, 50, 100);
+			let dstr = str;
+			for (let j = 0; j < i; j++)
+				dstr += ".";
+			bmg.fillStyle = "20px black";
+			bmg.fillText(dstr, 10, 35);
+			canvas.drawImage(bf);
+		}, 500);
+		i = Mod(i + 1, 4);
+	}
+}
+
+function PixelToTile(PixelX, PixelY)
+{
+	let xdbl = Math.floor((PixelX + _CameraPosition[0] - _ScreenWidth / 2) * 2 / _TileSize);
+	let xdev = PixelX + _CameraPosition[0] - _ScreenWidth / 2 - xdbl * _TileSize / 2;
+	let ydev = 2 / Math.sqrt(3) * (xdev - _TileSize / 4) * (Mod(xdbl, 2) - 0.5);
+	let yhalf = Math.floor((PixelY + _CameraPosition[1] - _ScreenHeight / 2 - ydev) / _TileSize / Math.sqrt(3));
+	let y = yhalf * 2 + ((PixelY + _CameraPosition[1] - _ScreenHeight / 2 >= (yhalf + 0.5) * Math.sqrt(3) * _TileSize - ydev) ? 1 : 0);
+	let x = Mod(Math.floor((double)(xdbl - Mod(y, 2)) / 2), map.Width);
+	return [x, y];
+}
+
+function TileToPixel(x, y)
+{
+	let PixelX = Mod((x + 0.5 * (Mod(y, 2) + 1)) * _TileSize - _CameraPosition[0] + 0.5 * map.Width * _TileSize, map.Width * _TileSize) + 0.5 * (_ScreenWidth - map.Width * _TileSize);
+	let PixelY = (y + 0.5) * _TileSize * Math.sqrt(3) / 2 - _CameraPosition[1] + _ScreenHeight * 0.5;
+	return [PixelX, PixelY];
+}
+
+function FromLegend(mode, value)
+{
+	if (mode == ToggleViewMode.ByTemperature)
+		return FromHSV((30 - value) * 240 / 60, 1, 1);
+	else if (mode == ToggleViewMode.ByPrecipitation)
+		return FromHSV(Math.max(240 * Math.LN10(value * 0.01) / Math.LN10(50), 0), 1, 1);
+	else if (mode == ToggleViewMode.ByAltitude)
+	{
+		switch (value)
+		{
+			case 0:
+				return "rgb(0, 0, 50)";
+			case 1:
+				return "rgb(0, 50, 100)";
+			case 2:
+				return "rgb(48, 96, 0)";
+			case 3:
+				return "rgb(112, 149, 0)";
+			case 4:
+				return "rgb(96, 60, 0)";
+			default:
+				return "black"
+		}
+	}
+	else
+		return "black";
+}
+
+function FromHSV(Hue, Saturation, Value)
+{
+	let H = Mod(Hue / 60, 6);
+	let C = Saturation * Value;
+	let X = C * (1 - Math.abs(Mod(H, 2) - 1));
+	let m = Value - C;
+
+	if (H <= 1)
+		return "rgb((255 * (C + m)), (255 * (X + m)), (255 * m))";
+	else if (H <= 2)
+		return "rgb((255 * (X + m)), (255 * (C + m)), (255 * m))";
+	else if (H <= 3)
+		return "rgb((255 * (0 + m)), (255 * (C + m)), (255 * (X + m)))";
+	else if (H <= 4)
+		return "rgb((255 * (0 + m)), (255 * (X + m)), (255 * (C + m)))";
+	else if (H <= 5)
+		return "rgb((255 * (X + m)), (255 * (0 + m)), (255 * (C + m)))";
+	else if (H <= 6)
+		return "rgb((255 * (C + m)), (255 * (0 + m)), (255 * (X + m)))";
+	else
+		return "black";
+}
+
+function InitializeGame()
+{
+	map = new Map(MAPWIDTH);
+	CameraPosition = [map.PlayerPosition[0] * TileSize + TileSize / 2 * (Mod(map.PlayerPosition[1], 2) + 1),
+					AB(map.PlayerPosition[1] * TileSize * Math.Sqrt(3) / 2 + TileSize * Math.Sqrt(3) / 4, document.body.clientHeight / 2 - TileSize * Math.Sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.Sqrt(3) / 2 - document.body.clientHeight / 2 + 1)];
+
 }
