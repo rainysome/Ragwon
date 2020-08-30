@@ -39,17 +39,13 @@ let IsAdditionalDrawingNeeded = false;
 let _ScreenWidth;
 let _ScreenHeight;
 
-let _TileSize;
-let _CameraPosition = [0, 0];
-let _V = [0, 0];
+let _TileSize = 24.0;
+let _CameraPosition = [0.0, 0.0];
+let _V = [0.0, 0.0];
 
 let map;
 const MAPWIDTH = 180;
 let IsMouseDown = false;
-
-let TileSize = 24.0;
-let CameraPosition = [0, 0];
-V = [0, 0];
 
 let OldMouse = [0, 0];
 let ToggleView = ToggleViewMode.ByTerrain;
@@ -843,9 +839,59 @@ function main()
 	bmg.scale(RetinaScale, RetinaScale);
 	//let DrawingThread = setInterval(DrawLoadingScreen, 500);
 	//DrawLoadingScreen();
+	RegisterEvents();
 	InitializeGame();
 	Draw();
 	//clearInterval(DrawingThread);
+}
+
+function RegisterEvents()
+{
+	bf.addEventListener("touchstart", TouchStart, false);
+	bf.addEventListener("touchend", TouchEnd, false);
+	bf.addEventListener("touchcancel", TouchCancel, false);
+	bf.addEventListener("touchmove", TouchMove, false);
+}
+
+function TouchStart(evt)
+{
+	evt.preventDefault();
+	var touches = evt.changedTouches;
+		  
+	if (touches.length > 0)
+	{
+		IsMouseDown = true;
+		OldMouse[0] = touches[0].pageX;
+		OldMouse[1] = touches[0].pageY;
+		V[0] = 0.0;
+		V[1] = 0.0;
+	}
+}
+
+function TouchMove(evt)
+{
+	evt.preventDefault();
+	var touches = evt.changedTouches;
+
+	if (touches.length > 0)
+	{
+		V[0] = OldMouse[0] - touches[0].pageX;
+		V[1] = OldMouse[1] - touches[0].pageY;
+		ScrollMap(V.X, V.Y);
+		OldMouse = [touches[0].pageX, touches[0].pageY];
+		IsRedrawingNeeded = true;
+	}
+}
+
+function TouchEnd(evt)
+{
+	evt.preventDefault();
+	var touches = evt.changedTouches;
+
+	if (touches.length > 0)
+	{
+		IsMouseDown = false;
+	}
 }
 
 function Draw(timestamp)
@@ -859,6 +905,27 @@ function Draw(timestamp)
 	_CameraPosition = CameraPosition.slice();
 	_V = V.slice();
 	IsRedrawingNeeded = true;
+
+	// 속도를 업데이트해준다.
+	if (!IsMouseDown)
+	{
+		V[0] *= 0.9;
+		V[1] *= 0.9;
+		if (V[0] < 1 && V[0] > -1)
+			V[0] = 0;
+		if (V[1] < 1 && V[1] > -1)
+			V[1] = 0;
+		if (V[0] != 0 || V[1] != 0)
+		{
+			ScrollMap(V[0], V[1]);
+			IsRedrawingNeeded = true;
+		}
+	}
+	else
+	{
+		V = [0.0, 0.0];
+	}
+
 	// 다시 그려야 하거나 한 프레임 더 그려야 하면 맵부터 그리고 타일 선택된거 그리고 문명 그리고 인터페이스도 그린다.
 	if (IsRedrawingNeeded || IsAdditionalDrawingNeeded)
 	{
@@ -880,9 +947,6 @@ function DrawMap()
 {
 	let c = "";
 	//bmg.clearRect(0, 0, _ScreenWidth, _ScreenHeight);
-	bmg.strokeStyle = FromLegend(ToggleViewMode.ByAltitude, 1);
-	bmg.lineWidth = 0.1 * _TileSize;
-	bmg.lineCap = "round";
 
 	let RiverLines = [];
 
@@ -958,11 +1022,14 @@ function DrawMap()
 	}
 	
 	// 기록해둔 점의 쌍들로 강을 그린다.
+	bmg.strokeStyle = FromLegend(ToggleViewMode.ByAltitude, 1);
+	bmg.lineWidth = 0.1 * _TileSize;
+	bmg.lineCap = "round";
 	bmg.beginPath();
-	bmg.moveTo(RiverLines[0][0], RiverLines[0][1]);
-	for (let i = 1; i < RiverLines.length; i++)
+	for (let i = 0; i < RiverLines.length; i++)
 	{
-		bmg.lineTo(RiverLines[i][0], RiverLines[i][1]);
+		bmg.moveTo(RiverLines[i][0][0], RiverLines[i][0][1]);
+		bmg.lineTo(RiverLines[i][1][0], RiverLines[i][1][1]);
 	}
 	bmg.stroke();
 }
@@ -1032,6 +1099,12 @@ function FromLegend(mode, value)
 	}
 	else
 		return "black";
+}
+
+function ScrollMap(dx, dy)
+{
+	CameraPosition[0] = Mod(CameraPosition[0] + dx, map.Width * TileSize);
+	CameraPosition[1] = AB(CameraPosition[1] + dy, document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2);
 }
 
 function FromHSV(Hue, Saturation, Value)
