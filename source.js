@@ -832,18 +832,16 @@ function main()
 	let w = document.body.clientWidth;
 	let h = document.body.clientHeight;
 	RetinaScale = ("devicePixelRatio" in window) ? window.devicePixelRatio : 1;
-
+	//RetinaScale = 1;
 	canvas.width = w * RetinaScale;
 	canvas.height = h * RetinaScale;
 	canvas.style.width = w + "px";
 	canvas.style.height = h + "px";
 	canvas.getContext("2d").scale(RetinaScale, RetinaScale);
-
 	bf = document.createElement("canvas");
 	bf.width = canvas.width;
 	bf.height = canvas.height;
 	bmg = bf.getContext("2d");
-
 	//let DrawingThread = setInterval(DrawLoadingScreen, 500);
 	//DrawLoadingScreen();
 	InitializeGame();
@@ -856,8 +854,8 @@ function Draw(timestamp)
 	//window.requestAnimationFrame(Draw);
 
 	// 중간에 값이 변경되면 맵이 깨지므로 처음의 변수 값들을 미리 기록해둔다.
-	_ScreenWidth = canvas.width;
-	_ScreenHeight = canvas.height;
+	_ScreenWidth = document.body.clientWidth;
+	_ScreenHeight = document.body.clientHeight;
 	_TileSize = TileSize;
 	_CameraPosition = CameraPosition.slice();
 	_V = V.slice();
@@ -865,13 +863,10 @@ function Draw(timestamp)
 	// 다시 그려야 하거나 한 프레임 더 그려야 하면 맵부터 그리고 타일 선택된거 그리고 문명 그리고 인터페이스도 그린다.
 	if (IsRedrawingNeeded || IsAdditionalDrawingNeeded)
 	{
-		bmg.clearRect(0, 0, bf.width, bf.height);
+		bmg.clearRect(0, 0, _ScreenWidth, _ScreenHeight);
 		DrawMap();
-		canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+		canvas.getContext("2d").clearRect(0, 0, _ScreenWidth, _ScreenHeight);
 		canvas.getContext("2d").drawImage(bf, 0, 0);
-		canvas.style.width = document.body.clientWidth + "px";
-		canvas.style.height = document.body.clientHeight + "px";
-		canvas.getContext("2d").scale(RetinaScale, RetinaScale);
 		if (IsRedrawingNeeded)
 			IsAdditionalDrawingNeeded = true;
 		else
