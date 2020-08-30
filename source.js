@@ -841,7 +841,7 @@ function main()
 	bf = new OffscreenCanvas(canvas.width, canvas.height);
 	bmg = bf.getContext("2d");
 	
-	worker = new Worker("./worker.js");
+	const worker = new Worker("./worker.js");
 	worker.postMessage({func: "DrawLoadingScreen", bmg: bmg}, [bmg]);
 	InitializeGame();
 	worker.terminate();
