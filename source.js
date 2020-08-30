@@ -843,7 +843,9 @@ function main()
 	canvas.style.height = h + "px";
 	canvas.getContext("2d").scale(RetinaScale, RetinaScale);
 
-	bf = new OffscreenCanvas(canvas.width, canvas.height);
+	bf = document.createElement("canvas");
+	bf.width = canvas.width;
+	bf.height = canvas.height;
 	bmg = bf.getContext("2d");
 	
 	//const worker = new Worker(URL.createObjectURL(new Blob(["("+worker_function.toString()+")()"], {type: 'text/javascript'})));
