@@ -276,6 +276,9 @@ class Map
 		// 타일과 강들을 초기화시켜준다.
 		this.Tiles = new Array(this.Width);
 		this.Rivers = new Array(3);
+		this.Rivers[EdgeType.Vertical] = new Array(this.Width);
+		this.Rivers[EdgeType.LeftToRight] = new Array(this.Width);
+		this.Rivers[EdgeType.RightToLeft] = new Array(this.Width);
 		for (let i = 0; i < this.Width; i++)
 		{
 			this.Tiles[i] = new Array(this.Height);
@@ -292,13 +295,13 @@ class Map
 		}
 		
 		// 타일마다 자라날 확률을 정해준다.
-		let p_tiles = new Float32Array(this.Width);
+		let p_tiles = new Array(this.Width);
 
 		// 대륙이 될 씨앗을 세 개 뿌린다.
 		for (let i = 0; i < 3; i++)
 		{
-			let sx = Math.round(Math.random() * this.Width);
-			let sy = Math.round(Math.random() * this.Height);
+			let sx = Math.floor(Math.random() * this.Width);
+			let sy = Math.floor(Math.random() * this.Height);
 			this.Tiles[sx][sy].tAltitude = TRLANDALTITUDE;
 		}
 
@@ -312,7 +315,7 @@ class Map
 				let LandArea = 0;
 				for (let x = 0; x < this.Width; x++)
 				{
-					p_tiles[x] = new Float32Array(this.Height);
+					p_tiles[x] = new Array(this.Height);
 					for (let y = 0; y < this.Height; y++)
 					{
 						p_tiles[x][y] = PRDEFAULT;
@@ -328,7 +331,7 @@ class Map
 				{
 					for (let y = 0; y < this.Height; y++)
 					{
-						let v = Neighbors(x, y, 1);
+						let v = this.Neighbors(x, y, 1);
 
 						for (let i = 0; i < v.length; i++)
 						{
@@ -338,7 +341,7 @@ class Map
 								p_tiles[Mod(xx, this.Width)][yy] += Math.min(this.Tiles[x][y].tAltitude, TRLANDALTITUDE + 0.1 * (this.Tiles[x][y].tAltitude - TRLANDALTITUDE)) * PRLANDCOEFF;
 						}
 
-						v = Neighbors(x, y, 2);
+						v = this.Neighbors(x, y, 2);
 						for (let i = 0; i < v.length; i++)
 						{
 							let xx = v[i][0];
@@ -382,7 +385,7 @@ class Map
 				{
 					for (let y = 0; y < this.Height; y++)
 					{
-						let v = Neighbors(x, y, 1);
+						let v = this.Neighbors(x, y, 1);
 						let nn = 0;
 						let p = Math.random();
 						for (let i = 0; i < v.length; i++)
@@ -411,14 +414,14 @@ class Map
 
 			// flood-fill 알고리즘으로 총 땅덩이의 수를 센다.
 			let LandmassCount = 0;
-			LandmassAreas = [];
+			this.LandmassAreas = [];
 			for (let x = 0; x < this.Width; x++)
 			{
 				for (let y = 0; y < this.Height; y++)
 				{
 					if (this.Tiles[x][y].IsLand && this.Tiles[x][y].LandmassNumber == -1)
 					{
-						LandmassAreas.push(FloodFill(x, y, LandmassCount));
+						this.LandmassAreas.push(this.FloodFill(x, y, LandmassCount));
 						LandmassCount++;
 					}
 				}
@@ -427,7 +430,7 @@ class Map
 			// 땅덩이 중 대륙이라고 부를 만한 땅덩이가 없으면 지도를 다시 만든다.
 			for (let i = 0; i < LandmassCount; i++)
 			{
-				if (LandmassAreas[i] >= MINCONTINENTAREA)
+				if (this.LandmassAreas[i] >= MINCONTINENTAREA)
 					NoContinents = false;
 			}
 		}
@@ -438,11 +441,11 @@ class Map
 			for (let y = 0; y < this.Height; y++)
 			{
 				// isContinent 속성을 정해준다.
-				if (this.Tiles[x][y].IsLand && LandmassAreas[this.Tiles[x][y].LandmassNumber] >= MINCONTINENTAREA)
+				if (this.Tiles[x][y].IsLand && this.LandmassAreas[this.Tiles[x][y].LandmassNumber] >= MINCONTINENTAREA)
 					this.Tiles[x][y].IsContinent = true;
 
 				// isShore 속성을 정해준다.
-				var v = Neighbors(x, y, 1);
+				var v = this.Neighbors(x, y, 1);
 				for (let i = 0; i < v.length; i++)
 				{
 					let xx = v[i][0];
@@ -477,14 +480,14 @@ class Map
 		// 연안을 따라 큐에 강 후보지들을 넣는다.
 		for (let k = 0; k < ShoreTiles.length; k++)
 		{
-			ss = ShoreTiles[k];
+			let ss = ShoreTiles[k];
 			let x = ss[0];
 			let y = ss[1];
 			let oyy = 0;		// 시작 타일의 y좌표.
 
 			let edge = [];
 
-			let v = Neighbors(x, y, 1);
+			let v = this.Neighbors(x, y, 1);
 
 			if (v.length < 6)
 				continue;
@@ -515,7 +518,7 @@ class Map
 		// 큐가 비어있지 않다면 강을 연장할 수 있는지 알아보고 확률에 따라 연장한다.
 		while (queue.length > 0)
 		{
-			let q = queue.splice(0, 1);
+			let q = queue.splice(0, 1)[0];
 
 			let Candidates = Rivers[q[0]][q[1]][q[2]].OtherEdges(this.Width, this.Height, q[3]);
 			let Scores = [0.0, 0.0];
@@ -551,7 +554,7 @@ class Map
 				NextCandidates[i][0] = EdgeBetweenTiles(Directs[i][0], Directs[i][1], Sides[i][0][0], Sides[i][0][1], this.Width);
 				NextCandidates[i][1] = EdgeBetweenTiles(Directs[i][0], Directs[i][1], Sides[i][1][0], Sides[i][1][1], this.Width);
 
-				Nears[i] = Neighbors(Directs[i][0], Directs[i][1], 1).concat(Neighbors(Directs[i][0], Directs[i][1], 2));
+				Nears[i] = this.Neighbors(Directs[i][0], Directs[i][1], 1).concat(this.Neighbors(Directs[i][0], Directs[i][1], 2));
 
 				// 주변에 저지대가 많을수록 좋은 후보.
 				let NearLandCount = 0;
@@ -690,14 +693,14 @@ class Map
 		{
 			for (let y = 0; y < this.Tiles[x].length; y++)
 			{
-				if (Tiles[x][y].IsContinent)
+				if (this.Tiles[x][y].IsContinent)
 				{
 					ct.push([x, y]);
 				}
 			}
 		}
-		PlayerPosition = ct[Math.floor(Math.random() * ct.length)];
-		PlayerCivilization = new Civilization(10, PlayerPosition[0], PlayerPosition[1]);
+		this.PlayerPosition = ct[Math.floor(Math.random() * ct.length)];
+		this.PlayerCivilization = new Civilization(10, this.PlayerPosition[0], this.PlayerPosition[1]);
 	}
 
 	FloodFill(x, y, num)
@@ -709,13 +712,15 @@ class Map
 		while (queue.length > 0)
 		{
 			let xx, yy;
-			let tt = queue.splice(0, 1);
+			let tt = queue.splice(0, 1)[0];
 			xx = tt[0];
 			yy = tt[1];
 			let west = [ xx, yy ];
 			let east = [ xx, yy ];
 			while (this.Tiles[Mod((west[0] - 1), this.Width)][west[1]].LandmassNumber == -1 && this.Tiles[Mod((west[0] - 1), this.Width)][west[1]].IsLand)
+			{
 				west[0]--;
+			}
 			while (this.Tiles[Mod((east[0] + 1), this.Width)][east[1]].LandmassNumber == -1 && this.Tiles[Mod((east[0] + 1), this.Width)][east[1]].IsLand)
 				east[0]++;
 			for (let i = west[0]; i <= east[0]; i++)
@@ -731,7 +736,7 @@ class Map
 					if (this.Tiles[Mod((i - 1 + r), this.Width)][yy - 1].LandmassNumber == -1 && this.Tiles[Mod((i - 1 + r), this.Width)][yy - 1].IsLand)
 						queue.push([ Mod((i - 1 + r), this.Width), yy - 1 ]);
 					else if (this.Tiles[Mod((i + r), this.Width)][yy - 1].LandmassNumber == -1 && this.Tiles[Mod((i + r), this.Width)][yy - 1].IsLand)
-						queue.push([ Mod((i + r), this.Width)][yy - 1 ]);
+						queue.push([ Mod((i + r), this.Width), yy - 1 ]);
 				}
 				if (yy < this.Height - 1)
 				{
@@ -841,8 +846,9 @@ function main()
 	bf = new OffscreenCanvas(canvas.width, canvas.height);
 	bmg = bf.getContext("2d");
 	
+	//const worker = new Worker(URL.createObjectURL(new Blob(["("+worker_function.toString()+")()"], {type: 'text/javascript'})));
 	const worker = new Worker("./worker.js");
-	worker.postMessage({func: "DrawLoadingScreen", bmg: bmg}, [bmg]);
+	worker.postMessage({func: "DrawLoadingScreen"}, []);
 	InitializeGame();
 	worker.terminate();
 }
@@ -966,6 +972,7 @@ function DrawLoadingScreen()
 	let i = 0;
 	while (true)
 	{
+		console.log(i);
 		setTimeout(() => {
 			bmg.clearRect(0, 0, 50, 100);
 			let dstr = str;
@@ -1052,6 +1059,6 @@ function InitializeGame()
 {
 	map = new Map(MAPWIDTH);
 	CameraPosition = [map.PlayerPosition[0] * TileSize + TileSize / 2 * (Mod(map.PlayerPosition[1], 2) + 1),
-					AB(map.PlayerPosition[1] * TileSize * Math.Sqrt(3) / 2 + TileSize * Math.Sqrt(3) / 4, document.body.clientHeight / 2 - TileSize * Math.Sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.Sqrt(3) / 2 - document.body.clientHeight / 2 + 1)];
+					AB(map.PlayerPosition[1] * TileSize * Math.sqrt(3) / 2 + TileSize * Math.sqrt(3) / 4, document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2 + 1)];
 
 }
