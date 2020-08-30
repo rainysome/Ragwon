@@ -30,36 +30,24 @@
 			//window.onresize = function() { Resize(); }
         </script>
         
-        <!--<script src="./source.js"></script>-->
+        <script src="./source.js"></script>
 	</head>
 	
-	<body>
+	<body onload="main();">
 		<canvas id="canvas">
 			브라우저가 <code>&lt;canvas&gt;</code> 요소를 지원하지 않습니다.
         </canvas>
 	</body>
 	
 	<script>
-        class Foo
-        {
-            constructor(f)
-            {
-                this.foo = f;
-            }
-
-            get X()
-            {
-                return this.foo;
-            }
-        }
-        
+        /*
 		function main()
 		{
             f = new Foo("hello");
             canvas = document.getElementById("canvas");
             w = document.body.clientWidth;
             h = document.body.clientHeight;
-            scale = BackingScale();
+            scale = ("devicePixelRatio" in window) ? window.devicePixelRatio : 1;
 
             canvas.width = w * scale;
             canvas.height = h * scale;
@@ -70,24 +58,14 @@
 
             ctx.fillStyle = "red";
             ctx.font = "48pt serif";
-            ctx.fillText(f.X, 10, 60);
-            ctx.fillText("bye", 10, 120);
-
-            let a = [[1, 2], [3, 4]];
-            let b = a.splice(0, 1);
-            alert(b);
-            alert(a);
+            let a = [];
+            let b = [1, 2];
+            a = b.slice();
+            ctx.fillText(scale, 10, 60);
+            b[0] = 3;
+            ctx.fillText(a, 10, 120);
         }
-
-        function BackingScale(context)
-        {
-            if ("devicePixelRatio" in window)
-            {
-                return window.devicePixelRatio;
-            }
-            return 1;
-        }
-
-		main();
+        */
+		//main();
 	</script>
 </html>
