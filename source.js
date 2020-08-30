@@ -1038,7 +1038,7 @@ function DrawMap()
 	}
 	bmg.stroke();
 }
-
+/*
 let LoadingIncrement = 0;
 function DrawLoadingScreen()
 {
@@ -1059,7 +1059,7 @@ function DrawLoadingScreen()
 	LoadingIncrement = Mod(i + 1, 4);
 	setTimeout(DrawLoadingScreen, 500);
 }
-
+*/
 function PixelToTile(PixelX, PixelY)
 {
 	let xdbl = Math.floor((PixelX + _CameraPosition[0] - _ScreenWidth / 2) * 2 / _TileSize);
@@ -1105,13 +1105,13 @@ function FromLegend(mode, value)
 	else
 		return "black";
 }
-
+/*
 function ScrollMap(dx, dy)
 {
 	CameraPosition[0] = Mod(CameraPosition[0] + dx, map.Width * TileSize);
 	CameraPosition[1] = AB(CameraPosition[1] + dy, document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2);
 }
-
+*/
 function FromHSV(Hue, Saturation, Value)
 {
 	let H = Mod(Hue / 60, 6);
@@ -1135,10 +1135,9 @@ function FromHSV(Hue, Saturation, Value)
 		return "black";
 }
 
-async function InitializeGame()
+function InitializeGame()
 {
 	map = new Map(MAPWIDTH);
 	CameraPosition = [map.PlayerPosition[0] * TileSize + TileSize / 2 * (Mod(map.PlayerPosition[1], 2) + 1),
 					AB(map.PlayerPosition[1] * TileSize * Math.sqrt(3) / 2 + TileSize * Math.sqrt(3) / 4, document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2 + 1)];
-
 }
