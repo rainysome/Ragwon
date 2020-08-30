@@ -828,24 +828,28 @@ function Mod(a, b)
 
 function main()
 {
-	canvas = document.getElementById("canvas");
-	let w = document.body.clientWidth;
-	let h = document.body.clientHeight;
-	RetinaScale = ("devicePixelRatio" in window) ? window.devicePixelRatio : 1;
-	//RetinaScale = 3;
-	canvas.width = w * RetinaScale;
-	canvas.height = h * RetinaScale;
-	canvas.style.width = w + "px";
-	canvas.style.height = h + "px";
-
-	bf = canvas.transferControlToOffscreen();
-	bmg = bf.getContext("2d");
-	bmg.scale(RetinaScale, RetinaScale);
-	//let DrawingThread = setInterval(DrawLoadingScreen, 500);
-	//DrawLoadingScreen();
-	//RegisterEvents();
-	InitializeGame();
-	Draw();
+	try {
+		canvas = document.getElementById("canvas");
+		let w = document.body.clientWidth;
+		let h = document.body.clientHeight;
+		RetinaScale = ("devicePixelRatio" in window) ? window.devicePixelRatio : 1;
+		//RetinaScale = 4;
+		canvas.width = w * RetinaScale;
+		canvas.height = h * RetinaScale;
+		canvas.style.width = w + "px";
+		canvas.style.height = h + "px";
+	
+		bf = canvas.transferControlToOffscreen();
+		bmg = bf.getContext("2d");
+		bmg.scale(RetinaScale, RetinaScale);
+		//let DrawingThread = setInterval(DrawLoadingScreen, 500);
+		//DrawLoadingScreen();
+		//RegisterEvents();
+		InitializeGame();
+		Draw();
+	} catch (error) {
+		alert(error);
+	}
 	//clearInterval(DrawingThread);
 }
 /*
