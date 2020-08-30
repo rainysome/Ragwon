@@ -832,15 +832,16 @@ function main()
 	let w = document.body.clientWidth;
 	let h = document.body.clientHeight;
 	RetinaScale = ("devicePixelRatio" in window) ? window.devicePixelRatio : 1;
-	//RetinaScale = 3;
+	//RetinaScale = 1;
 	canvas.width = w * RetinaScale;
 	canvas.height = h * RetinaScale;
 	canvas.style.width = w + "px";
 	canvas.style.height = h + "px";
-
-	bf = canvas.transferControlToOffscreen();
+	canvas.getContext("2d").scale(RetinaScale, RetinaScale);
+	bf = document.createElement("canvas");
+	bf.width = canvas.width;
+	bf.height = canvas.height;
 	bmg = bf.getContext("2d");
-	bmg.scale(RetinaScale, RetinaScale);
 	//let DrawingThread = setInterval(DrawLoadingScreen, 500);
 	//DrawLoadingScreen();
 	//RegisterEvents();
@@ -935,10 +936,8 @@ function Draw()
 	{
 		bmg.clearRect(0, 0, _ScreenWidth, _ScreenHeight);
 		DrawMap();
-		/*
 		canvas.getContext("2d").clearRect(0, 0, _ScreenWidth, _ScreenHeight);
 		canvas.getContext("2d").drawImage(bf, 0, 0);
-		*/
 		if (IsRedrawingNeeded)
 			IsAdditionalDrawingNeeded = true;
 		else
