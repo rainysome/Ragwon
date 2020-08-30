@@ -842,7 +842,7 @@ function main()
 	bmg = bf.getContext("2d");
 	
 	worker = new Worker("./worker.js");
-	worker.postMessage({DrawFunc: DrawLoadingScreen}, [bmg, DrawLoadingScreen]);
+	worker.postMessage("DrawLoadingScreen", [bmg]);
 	InitializeGame();
 	worker.terminate();
 }
