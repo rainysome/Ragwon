@@ -858,7 +858,7 @@ function main()
 	}
 	//clearInterval(DrawingThread);
 }
-
+/*
 function RegisterEvents()
 {
 	bf.addEventListener("touchstart", TouchStart, false);
@@ -906,7 +906,7 @@ function TouchEnd(evt)
 		IsMouseDown = false;
 	}
 }
-
+*/
 function Draw()
 {
 	//window.requestAnimationFrame(Draw);
@@ -917,8 +917,8 @@ function Draw()
 	_TileSize = TileSize;
 	_CameraPosition = CameraPosition.slice();
 	_V = V.slice();
-	//IsRedrawingNeeded = true;
-	
+	IsRedrawingNeeded = true;
+	/*
 	// 속도를 업데이트해준다.
 	if (!IsMouseDown)
 	{
@@ -938,7 +938,7 @@ function Draw()
 	{
 		V = [0.0, 0.0];
 	}
-	
+	*/
 	// 다시 그려야 하거나 한 프레임 더 그려야 하면 맵부터 그리고 타일 선택된거 그리고 문명 그리고 인터페이스도 그린다.
 	if (IsRedrawingNeeded || IsAdditionalDrawingNeeded)
 	{
@@ -955,7 +955,7 @@ function Draw()
 		IsRedrawingNeeded = false;
 	}
 
-	setTimeout(Draw, 50);
+	//setTimeout(Draw, 50);
 }
 		
 function DrawMap()
@@ -1115,13 +1115,13 @@ function FromLegend(mode, value)
 	else
 		return "black";
 }
-
+/*
 function ScrollMap(dx, dy)
 {
 	CameraPosition[0] = Mod(CameraPosition[0] + dx, map.Width * TileSize);
 	CameraPosition[1] = AB(CameraPosition[1] + dy, document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2);
 }
-
+*/
 function FromHSV(Hue, Saturation, Value)
 {
 	let H = Mod(Hue / 60, 6);
