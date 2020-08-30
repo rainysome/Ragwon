@@ -910,7 +910,7 @@ function Draw()
 	_CameraPosition = CameraPosition.slice();
 	_V = V.slice();
 	IsRedrawingNeeded = true;
-	/*
+
 	// 속도를 업데이트해준다.
 	if (!IsMouseDown)
 	{
@@ -930,7 +930,7 @@ function Draw()
 	{
 		V = [0.0, 0.0];
 	}
-	*/
+
 	// 다시 그려야 하거나 한 프레임 더 그려야 하면 맵부터 그리고 타일 선택된거 그리고 문명 그리고 인터페이스도 그린다.
 	if (IsRedrawingNeeded || IsAdditionalDrawingNeeded)
 	{
@@ -945,7 +945,7 @@ function Draw()
 		IsRedrawingNeeded = false;
 	}
 
-	//setTimeout(Draw, 50);
+	setTimeout(Draw, 50);
 }
 		
 function DrawMap()
