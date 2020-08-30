@@ -854,7 +854,6 @@ function RegisterEvents()
 	bf.addEventListener("touchstart", TouchStart, false);
 	bf.addEventListener("touchend", TouchEnd, false);
 	bf.addEventListener("touchmove", TouchMove, false);
-	HTMLCanvasElement.prototype.addEventListener()
 }
 
 function TouchStart(evt)
