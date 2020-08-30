@@ -16,6 +16,44 @@ const ToggleViewMode =
 const TRMAXALTITUDE = 4;
 const TRLANDALTITUDE = 2;
 
+const LANDRATIO = 0.25;		// 전체 넓이 대 땅 넓이의 비율.
+const MINCONTINENTAREA = 40;		// 대륙이 되기 위한 최소 넓이.
+
+const PRDEFAULT = 0.0008;		// 0.0015 모든 타일의 기본 땅 생성 확률. 클수록 해안선이 복잡해진다.
+const PRLANDCOEFF = 0.16;		// 0.08 기존의 땅 주변에서 또다른 땅이 생겨날 확률. 클수록 하나의 땅덩이가 넓어진다.
+const PRROUGHCOEFF = 0.08;		// 0.2 기존의 땅이 높아질 확률. 낮으면 저지대가 많이 생성된다.
+const PRTRYRIVER = 0.3;		// 조건이 되는 연안 타일들 중 실제로 강을 만들기 시작할 확률.
+const PRTRYRIVERBRANCH = 0.06;	// 강이 분기할 확률.
+const PRCOMPLEXCOASTLINE = 4;	// 복잡한 해안선을 만드는 루프를 반복할 횟수.
+
+let canvas;
+let bf;
+let bmg;
+let RetinaScale = 1;
+
+const MinimumFrameTime = 10;
+
+let IsRedrawingNeeded = false;
+let IsAdditionalDrawingNeeded = false;
+
+let _ScreenWidth;
+let _ScreenHeight;
+
+let _TileSize;
+let _CameraPosition = [0, 0];
+let _V = [0, 0];
+
+let map;
+const MAPWIDTH = 180;
+let IsMouseDown = false;
+
+let TileSize = 24.0;
+let CameraPosition = [0, 0];
+V = [0, 0];
+
+let OldMouse = [0, 0];
+let ToggleView = ToggleViewMode.ByTerrain;
+
 function AngleOffset(y)
 {
 	let r = Mod(y, 2);
@@ -74,7 +112,7 @@ class Edge
 
 	VertexTiles(width, height)
 	{
-		let r = Mod(Y, 2);
+		let r = Mod(this.Y, 2);
 		let t1, t2;
 
 		if (this.Type == EdgeType.Vertical)
@@ -248,16 +286,6 @@ class Civilization
 	}
 }
 
-const LANDRATIO = 0.25;		// 전체 넓이 대 땅 넓이의 비율.
-const MINCONTINENTAREA = 40;		// 대륙이 되기 위한 최소 넓이.
-
-const PRDEFAULT = 0.0008;		// 0.0015 모든 타일의 기본 땅 생성 확률. 클수록 해안선이 복잡해진다.
-const PRLANDCOEFF = 0.16;		// 0.08 기존의 땅 주변에서 또다른 땅이 생겨날 확률. 클수록 하나의 땅덩이가 넓어진다.
-const PRROUGHCOEFF = 0.08;		// 0.2 기존의 땅이 높아질 확률. 낮으면 저지대가 많이 생성된다.
-const PRTRYRIVER = 0.3;		// 조건이 되는 연안 타일들 중 실제로 강을 만들기 시작할 확률.
-const PRTRYRIVERBRANCH = 0.06;	// 강이 분기할 확률.
-const PRCOMPLEXCOASTLINE = 4;	// 복잡한 해안선을 만드는 루프를 반복할 횟수.
-
 class Map
 {
 	// public int[,] AIPositions;
@@ -347,11 +375,10 @@ class Map
 							let xx = v[i][0];
 							let yy = v[i][1];
 							if (yy >= 0 && yy < this.Height)
-								p_tiles[Mod(xx, this.Width)][yy] += Math.min(this.Tiles[x][y].tAltitude, TRLANDALTITUDE + 0.1 * (this.Tiles[x][y].tAltitude - TRLANDALTITUDE)) * PRLANDCOEFF / 4;
+								p_tiles[Mod(xx, this.Width)][yy] += Math.min(this.Tiles[x][y].tAltitude, TRLANDALTITUDE + 0.1 * (this.Tiles[x][y].tAltitude - TRLANDALTITUDE)) * PRLANDCOEFF / 4.0;
 						}
 					}
 				}
-
 				// 최종 확률에 따라 각 타일을 성장시킨다. 최종 확률은 위도에 따라 보정된다.
 				for (let x = 0; x < this.Width; x++)
 				{
@@ -445,13 +472,13 @@ class Map
 					this.Tiles[x][y].IsContinent = true;
 
 				// isShore 속성을 정해준다.
-				var v = this.Neighbors(x, y, 1);
+				let v = this.Neighbors(x, y, 1);
 				for (let i = 0; i < v.length; i++)
 				{
 					let xx = v[i][0];
 					let yy = v[i][1];
 					if (yy >= 0 && yy < this.Height)
-						if (this.Tiles[x][y].IsLand != this.Tiles[Mod(xx, this.Width), yy].IsLand)
+						if (this.Tiles[x][y].IsLand != this.Tiles[Mod(xx, this.Width)][yy].IsLand)
 							this.Tiles[x][y].IsShore = true;
 				}
 
@@ -495,14 +522,14 @@ class Map
 			// 바다 타일과 땅 타일 사이의 변을 시작점으로 집어넣는다.
 			for (let i = 0; i < v.length; i++)
 			{
-				if (this.Tiles[v[i][0],v[i][1]].tAltitude == TRLANDALTITUDE)
+				if (this.Tiles[v[i][0]][v[i][1]].tAltitude == TRLANDALTITUDE)
 				{
 					edge = EdgeBetweenTiles(x, y, v[i][0], v[i][1], this.Width);
-					if (this.Tiles[v[Mod(i + 1, 6)][0], v[Mod(i + 1, 6)][1]].tAltitude == TRLANDALTITUDE && !this.Tiles[v[Mod(i - 1, 6)][0], v[Mod(i - 1, 6)][1]].IsLand)
+					if (this.Tiles[v[Mod(i + 1, 6)][0]][v[Mod(i + 1, 6)][1]].tAltitude == TRLANDALTITUDE && !this.Tiles[v[Mod(i - 1, 6)][0]][v[Mod(i - 1, 6)][1]].IsLand)
 						oyy = v[Mod(i - 1, 6)][1];
-					else if (!this.Tiles[v[Mod(i + 1, 6)][0], v[Mod(i + 1, 6)][1]].IsLand && this.Tiles[v[Mod(i - 1, 6)][0], v[Mod(i - 1, 6)][1]].tAltitude == TRLANDALTITUDE)
+					else if (!this.Tiles[v[Mod(i + 1, 6)][0]][v[Mod(i + 1, 6)][1]].IsLand && this.Tiles[v[Mod(i - 1, 6)][0]][v[Mod(i - 1, 6)][1]].tAltitude == TRLANDALTITUDE)
 						oyy = v[Mod(i + 1, 6)][1];
-					else if (this.Tiles[v[Mod(i + 1, 6)][0], v[Mod(i + 1, 6)][1]].tAltitude == TRLANDALTITUDE && this.Tiles[v[Mod(i - 1, 6)][0], v[Mod(i - 1, 6)][1]].tAltitude == TRLANDALTITUDE)
+					else if (this.Tiles[v[Mod(i + 1, 6)][0]][v[Mod(i + 1, 6)][1]].tAltitude == TRLANDALTITUDE && this.Tiles[v[Mod(i - 1, 6)][0]][v[Mod(i - 1, 6)][1]].tAltitude == TRLANDALTITUDE)
 					{
 						if (Math.random() < 0.5)
 							oyy = v[Mod(i - 1, 6)][1];
@@ -519,22 +546,23 @@ class Map
 		while (queue.length > 0)
 		{
 			let q = queue.splice(0, 1)[0];
+			//console.log(q);
 
-			let Candidates = Rivers[q[0]][q[1]][q[2]].OtherEdges(this.Width, this.Height, q[3]);
+			let Candidates = this.Rivers[q[0]][q[1]][q[2]].OtherEdges(this.Width, this.Height, q[3]);
+			//console.log(Candidates);
 			let Scores = [0.0, 0.0];
-
+			//console.log(Candidates.length);
 			if (Candidates.length < 2)
 				continue;
 
-			let Sides = [ Rivers[Candidates[0][0], Candidates[0][1], Candidates[0][2]].SideTiles(this.Width, this.Height),
-																Rivers[Candidates[1][0], Candidates[1][1], Candidates[1][2]].SideTiles(this.Width, this.Height) ];
-			let Vertices = [ Rivers[Candidates[0][0], Candidates[0][1], Candidates[0][2]].VertexTiles(this.Width, this.Height),
-																Rivers[Candidates[1][0], Candidates[1][1], Candidates[1][2]].VertexTiles(this.Width, this.Height) ];
+			let Sides = [ this.Rivers[Candidates[0][0]][Candidates[0][1]][Candidates[0][2]].SideTiles(this.Width, this.Height),
+																this.Rivers[Candidates[1][0]][Candidates[1][1]][Candidates[1][2]].SideTiles(this.Width, this.Height) ];
+			let Vertices = [ this.Rivers[Candidates[0][0]][Candidates[0][1]][Candidates[0][2]].VertexTiles(this.Width, this.Height),
+																this.Rivers[Candidates[1][0]][Candidates[1][1]][Candidates[1][2]].VertexTiles(this.Width, this.Height) ];
 			let Bases = [[], []]
 			let Directs = [[], []];
 			let NextCandidates = [[[], []], [[], []]];
 			let Nears = [[[], []], [[], []]];
-
 			for (let i = 0; i < 2; i++)
 			{
 				if (Vertices[i].length < 2)
@@ -574,7 +602,7 @@ class Map
 				// 양쪽 강변의 고도가 차이가 덜 날수록 좋은 후보.
 				Scores[i] -= 0.95 * (Math.abs(this.Tiles[Sides[i][0][0]][Sides[i][0][1]].tAltitude - this.Tiles[Sides[i][1][0]][Sides[i][1][1]].tAltitude) - 0.5 * (TRMAXALTITUDE - TRLANDALTITUDE));
 				// 강을 더 놓았을 때 기존의 강과 연결되는 것은 되도록이면 피할 것.
-				if (Rivers[NextCandidates[i][0][0]][NextCandidates[i][0][1]][NextCandidates[i][0][2]].isRiver || Rivers[NextCandidates[i][1][0]][NextCandidates[i][1][1]][NextCandidates[i][1][2]].isRiver)
+				if (this.Rivers[NextCandidates[i][0][0]][NextCandidates[i][0][1]][NextCandidates[i][0][2]].isRiver || this.Rivers[NextCandidates[i][1][0]][NextCandidates[i][1][1]][NextCandidates[i][1][2]].isRiver)
 					Scores[i] -= 0.9;
 				// 강은 거꾸로 흐를 수 없다.
 				if (this.Tiles[Bases[i][0]][Bases[i][1]].tAltitude > this.Tiles[Directs[i][0]][Directs[i][1]].tAltitude)
@@ -593,17 +621,17 @@ class Map
 			else
 				ii = 1;
 
-			if (p <= Scores[ii] && !Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver)
+			if (p <= Scores[ii] && !this.Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver)
 			{
-				Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver = true;
+				this.Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver = true;
 				queue.push([ Candidates[ii][0], Candidates[ii][1], Candidates[ii][2], Bases[ii][1] ]);
 			}
 			// 두 번째 후보의 확률은 PRTRYRIVER만큼 줄어든다.
 			p = Math.random();
 			ii = 1 - ii;
-			if (p <= Scores[ii] * PRTRYRIVERBRANCH && !Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver)
+			if (p <= Scores[ii] * PRTRYRIVERBRANCH && !this.Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver)
 			{
-				Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver = true;
+				this.Rivers[Candidates[ii][0]][Candidates[ii][1]][Candidates[ii][2]].isRiver = true;
 				queue.push([ Candidates[ii][0], Candidates[ii][1], Candidates[ii][2], Bases[ii][1] ]);
 			}
 		}
@@ -652,8 +680,8 @@ class Map
 							de += 0.5 * this.Tiles[Mod(x - n, this.Width)][y].tAltitude;
 							se = 0;
 						}
-						this.Tiles[Mod(x + n, this.Width), y].tDistanceFromWest = dw;
-						this.Tiles[Mod(x - n, this.Width), y].tDistanceFromEast = de;
+						this.Tiles[Mod(x + n, this.Width)][y].tDistanceFromWest = dw;
+						this.Tiles[Mod(x - n, this.Width)][y].tDistanceFromEast = de;
 					}
 					break;
 				}
@@ -665,7 +693,7 @@ class Map
 			for (let y = 0; y < this.Height; y++)
 			{
 				// 유효거리는 서쪽 해안에서부터 잰 거리와 동쪽 해안에서부터 잰 거리를 위도에 따라 합성한 거리이다.
-				let lat = (this.Height - 1 - 2 * y) / this.Height;
+				let lat = (this.Height - 1.0 - 2 * y) / this.Height;
 				let alpha = (Math.cos(Math.PI * lat) + 1) / 2;
 				this.Tiles[x][y].tEffectiveDistance = (this.Tiles[x][y].tDistanceFromWest * this.Tiles[x][y].tDistanceFromEast) / (alpha * this.Tiles[x][y].tDistanceFromWest + (1 - alpha) * this.Tiles[x][y].tDistanceFromEast + 1);
 				// 강수량은 위도가 낮을수록 많은데, 30도 부근에서 최저치가 되도록 보정항이 있고, 유효거리가 멀수록, 고도가 높을수록 추가로 감소한다.
@@ -681,7 +709,6 @@ class Map
 				let PolarCapFactor = 0.5 * Math.tanh(-(this.Tiles[x][y].cMeanTemperature + this.Tiles[x][y].cTemperatureRange / 2)) + 0.5;
 				let TundraFactor = 0.5 * Math.tanh(-(this.Tiles[x][y].cMeanTemperature + this.Tiles[x][y].cTemperatureRange / 2) / 2 + 4.5) + 0.5;
 				this.Tiles[x][y].tVegetationColor = FromHSV(70 * VI + 20 + 30 * TundraFactor, AB(0.75 * VI + 0.25 - 0.3 * TundraFactor - PolarCapFactor, 0, 1), Math.min(0.37 * VI + 0.85 * (1 - VI) - 0.1 * TundraFactor + PolarCapFactor, 1));
-
 				// 식량 자원을 배치한다.
 
 			}
@@ -802,34 +829,6 @@ function Mod(a, b)
 	return (a - b * Math.floor(a * 1.0 / b));
 }
 
-let canvas;
-let bf;
-let bmg;
-let RetinaScale = 1;
-
-const MinimumFrameTime = 10;
-
-let IsRedrawingNeeded = false;
-let IsAdditionalDrawingNeeded = false;
-
-let _ScreenWidth;
-let _ScreenHeight;
-
-let _TileSize;
-let _CameraPosition = [0, 0];
-let _V = [0, 0];
-
-let map;
-const MAPWIDTH = 180;
-let IsMouseDown = false;
-
-let TileSize = 24.0;
-let CameraPosition = [0, 0];
-V = [0, 0];
-
-let OldMouse = [0, 0];
-let ToggleView = ToggleViewMode.ByTerrain;
-
 function main()
 {
 	canvas = document.getElementById("canvas");
@@ -846,18 +845,23 @@ function main()
 	bf = document.createElement("canvas");
 	bf.width = canvas.width;
 	bf.height = canvas.height;
+	bf.style.width = w + "px";
+	bf.style.height = h + "px";
 	bmg = bf.getContext("2d");
-	
-	//const worker = new Worker(URL.createObjectURL(new Blob(["("+worker_function.toString()+")()"], {type: 'text/javascript'})));
-	const worker = new Worker("./worker.js");
-	worker.postMessage({func: "DrawLoadingScreen"}, []);
+	bmg.scale(RetinaScale, RetinaScale);
+
+	//let DrawingThread = setInterval(DrawLoadingScreen, 500);
+	//console.log(DrawingThread);
+	//DrawLoadingScreen();
 	InitializeGame();
-	worker.terminate();
+	Draw();
+	//clearInterval(DrawingThread);
 }
 
 function Draw(timestamp)
 {
-	window.requestAnimationFrame(Draw);
+	console.log("Draw...");
+	//window.requestAnimationFrame(Draw);
 
 	// 중간에 값이 변경되면 맵이 깨지므로 처음의 변수 값들을 미리 기록해둔다.
 	_ScreenWidth = document.body.clientWidth;
@@ -865,13 +869,14 @@ function Draw(timestamp)
 	_TileSize = TileSize;
 	_CameraPosition = CameraPosition.slice();
 	_V = V.slice();
-
+	IsRedrawingNeeded = true;
 	// 다시 그려야 하거나 한 프레임 더 그려야 하면 맵부터 그리고 타일 선택된거 그리고 문명 그리고 인터페이스도 그린다.
 	if (IsRedrawingNeeded || IsAdditionalDrawingNeeded)
 	{
+		bmg.clearRect(0, 0, bf.width, bf.height);
 		DrawMap();
-
-		//canvas.drawImage(bf);
+		canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+		canvas.getContext("2d").drawImage(bf, 0, 0);
 		if (IsRedrawingNeeded)
 			IsAdditionalDrawingNeeded = true;
 		else
@@ -883,7 +888,7 @@ function Draw(timestamp)
 function DrawMap()
 {
 	let c = "";
-	bmg.clearRect(0, 0, _ScreenWidth, _ScreenHeight);
+	//bmg.clearRect(0, 0, _ScreenWidth, _ScreenHeight);
 	bmg.strokeStyle = FromLegend(ToggleViewMode.ByAltitude, 1);
 	bmg.lineWidth = 0.1 * _TileSize;
 	bmg.lineCap = "round";
@@ -896,6 +901,7 @@ function DrawMap()
 	let temp = [];
 	let a0 = _TileSize;
 	let x0, y0;
+	console.log(_ScreenWidth, _ScreenHeight, _TileSize);
 	for (let i = -1; i < _ScreenWidth / _TileSize + 2; i++)
 	{
 		for (let j = -1; j < _ScreenHeight * 2 / Math.sqrt(3) / _TileSize + 1; j++)
@@ -905,7 +911,9 @@ function DrawMap()
 			if (y < 0 || y >= map.Height)
 				c = "black";
 			else if (map.Tiles[x][y].tAltitude <= 1)
+			{
 				c = FromLegend(ToggleViewMode.ByAltitude, map.Tiles[x][y].tAltitude);
+			}
 			else
 			{
 				switch (ToggleView)
@@ -937,6 +945,7 @@ function DrawMap()
 										[(x0 + a0 / 2.0), (y0 - a0 / 2.0 / Math.sqrt(3))],
 										[x0, (y0 - a0 / Math.sqrt(3))] ];
 			bmg.fillStyle = c;
+			//console.log(c);
 			bmg.beginPath();
 			bmg.moveTo(pts[0][0], pts[0][1]);
 			for (let k = 1; k < 6; k++)
@@ -950,16 +959,17 @@ function DrawMap()
 			if (y >= 0 && y < map.Height)
 			{
 				if (map.Rivers[EdgeType.Vertical][x][y].isRiver)
-					RiverLines.Add( [pts[0], pts[1]] );
+					RiverLines.push( [pts[0], pts[1]] );
 				if (map.Rivers[EdgeType.LeftToRight][x][y].isRiver)
-					RiverLines.Add([pts[0], pts[5]]);
+					RiverLines.push([pts[0], pts[5]]);
 				if (map.Rivers[EdgeType.RightToLeft][x][y].isRiver)
-					RiverLines.Add([pts[5], pts[4]]);
+					RiverLines.push([pts[5], pts[4]]);
 			}
 		}
 	}
 	
 	// 기록해둔 점의 쌍들로 강을 그린다.
+	bmg.beginPath();
 	bmg.moveTo(RiverLines[0][0], RiverLines[0][1]);
 	for (let i = 1; i < RiverLines.length; i++)
 	{
@@ -968,24 +978,26 @@ function DrawMap()
 	bmg.stroke();
 }
 
+let LoadingIncrement = 0;
 function DrawLoadingScreen()
 {
+	console.log("DrawLoadingScreen...");
 	let str = "Loading.";
-	let i = 0;
-	while (true)
-	{
-		console.log(i);
-		setTimeout(() => {
-			bmg.clearRect(0, 0, 50, 100);
-			let dstr = str;
-			for (let j = 0; j < i; j++)
-				dstr += ".";
-			bmg.fillStyle = "20px black";
-			bmg.fillText(dstr, 10, 35);
-			canvas.drawImage(bf);
-		}, 500);
-		i = Mod(i + 1, 4);
-	}
+	let i = LoadingIncrement;
+	bmg.clearRect(0, 0, bf.width, bf.height);
+
+	let dstr = str;
+	for (let j = 0; j < i; j++)
+		dstr += ".";
+	//alert(dstr);
+	bmg.font = "bold 40px sans-serif";
+	bmg.fillText(dstr, 10, 50);
+	
+	canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+	canvas.getContext("2d").drawImage(bf, 0, 0);
+
+	LoadingIncrement = Mod(i + 1, 4);
+	setTimeout(DrawLoadingScreen, 500);
 }
 
 function PixelToTile(PixelX, PixelY)
@@ -995,7 +1007,7 @@ function PixelToTile(PixelX, PixelY)
 	let ydev = 2 / Math.sqrt(3) * (xdev - _TileSize / 4) * (Mod(xdbl, 2) - 0.5);
 	let yhalf = Math.floor((PixelY + _CameraPosition[1] - _ScreenHeight / 2 - ydev) / _TileSize / Math.sqrt(3));
 	let y = yhalf * 2 + ((PixelY + _CameraPosition[1] - _ScreenHeight / 2 >= (yhalf + 0.5) * Math.sqrt(3) * _TileSize - ydev) ? 1 : 0);
-	let x = Mod(Math.floor((double)(xdbl - Mod(y, 2)) / 2), map.Width);
+	let x = Mod(Math.floor((xdbl - Mod(y, 2)) / 2), map.Width);
 	return [x, y];
 }
 
@@ -1042,23 +1054,24 @@ function FromHSV(Hue, Saturation, Value)
 	let m = Value - C;
 
 	if (H <= 1)
-		return "rgb((255 * (C + m)), (255 * (X + m)), (255 * m))";
+		return `rgb(${(255 * (C + m))}, ${(255 * (X + m))}, ${(255 * m)})`;
 	else if (H <= 2)
-		return "rgb((255 * (X + m)), (255 * (C + m)), (255 * m))";
+		return `rgb(${(255 * (X + m))}, ${(255 * (C + m))}, ${(255 * m)})`;
 	else if (H <= 3)
-		return "rgb((255 * (0 + m)), (255 * (C + m)), (255 * (X + m)))";
+		return `rgb(${(255 * (0 + m))}, ${(255 * (C + m))}, ${(255 * (X + m))})`;
 	else if (H <= 4)
-		return "rgb((255 * (0 + m)), (255 * (X + m)), (255 * (C + m)))";
+		return `rgb(${(255 * (0 + m))}, ${(255 * (X + m))}, ${(255 * (C + m))})`;
 	else if (H <= 5)
-		return "rgb((255 * (X + m)), (255 * (0 + m)), (255 * (C + m)))";
+		return `rgb(${(255 * (X + m))}, ${(255 * (0 + m))}, ${(255 * (C + m))})`;
 	else if (H <= 6)
-		return "rgb((255 * (C + m)), (255 * (0 + m)), (255 * (X + m)))";
+		return `rgb(${(255 * (C + m))}, ${(255 * (0 + m))}, ${(255 * (X + m))})`;
 	else
 		return "black";
 }
 
-function InitializeGame()
+async function InitializeGame()
 {
+	console.log("InitializeGame...");
 	map = new Map(MAPWIDTH);
 	CameraPosition = [map.PlayerPosition[0] * TileSize + TileSize / 2 * (Mod(map.PlayerPosition[1], 2) + 1),
 					AB(map.PlayerPosition[1] * TileSize * Math.sqrt(3) / 2 + TileSize * Math.sqrt(3) / 4, document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2 + 1)];
