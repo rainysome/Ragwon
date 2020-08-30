@@ -830,7 +830,8 @@ function Mod(a, b)
 
 function main()
 {
-	try {
+	try
+	{
 		canvas = document.getElementById("canvas");
 		let w = document.body.clientWidth;
 		let h = document.body.clientHeight;
@@ -841,7 +842,8 @@ function main()
 		canvas.style.width = w + "px";
 		canvas.style.height = h + "px";
 	
-		bf = canvas.transferControlToOffscreen();
+		//bf = canvas.transferControlToOffscreen();
+		bf = canvas;
 		bmg = bf.getContext("2d");
 		bmg.scale(RetinaScale, RetinaScale);
 		//let DrawingThread = setInterval(DrawLoadingScreen, 500);
@@ -849,7 +851,9 @@ function main()
 		//RegisterEvents();
 		InitializeGame();
 		Draw();
-	} catch (error) {
+	}
+	catch (error)
+	{
 		alert(error);
 	}
 	//clearInterval(DrawingThread);
