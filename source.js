@@ -39,7 +39,11 @@ let IsAdditionalDrawingNeeded = false;
 let _ScreenWidth;
 let _ScreenHeight;
 
-let _TileSize = 24.0;
+let TileSize = 24.0;
+let CameraPosition = [0.0, 0.0];
+let V = [0.0, 0.0];
+
+let _TileSize;
 let _CameraPosition = [0.0, 0.0];
 let _V = [0.0, 0.0];
 
