@@ -843,17 +843,18 @@ function main()
 	bmg.scale(RetinaScale, RetinaScale);
 	//let DrawingThread = setInterval(DrawLoadingScreen, 500);
 	//DrawLoadingScreen();
-	RegisterEvents();
+	//RegisterEvents();
 	InitializeGame();
 	Draw();
 	//clearInterval(DrawingThread);
 }
-
+/*
 function RegisterEvents()
 {
 	bf.addEventListener("touchstart", TouchStart, false);
 	bf.addEventListener("touchend", TouchEnd, false);
 	bf.addEventListener("touchmove", TouchMove, false);
+	HTMLCanvasElement.prototype.addEventListener()
 }
 
 function TouchStart(evt)
@@ -896,7 +897,7 @@ function TouchEnd(evt)
 		IsMouseDown = false;
 	}
 }
-
+*/
 function Draw()
 {
 	//window.requestAnimationFrame(Draw);
