@@ -546,12 +546,9 @@ class Map
 		while (queue.length > 0)
 		{
 			let q = queue.splice(0, 1)[0];
-			//console.log(q);
 
 			let Candidates = this.Rivers[q[0]][q[1]][q[2]].OtherEdges(this.Width, this.Height, q[3]);
-			//console.log(Candidates);
 			let Scores = [0.0, 0.0];
-			//console.log(Candidates.length);
 			if (Candidates.length < 2)
 				continue;
 
@@ -845,13 +842,9 @@ function main()
 	bf = document.createElement("canvas");
 	bf.width = canvas.width;
 	bf.height = canvas.height;
-	bf.style.width = w + "px";
-	bf.style.height = h + "px";
 	bmg = bf.getContext("2d");
-	bmg.scale(RetinaScale, RetinaScale);
 
 	//let DrawingThread = setInterval(DrawLoadingScreen, 500);
-	//console.log(DrawingThread);
 	//DrawLoadingScreen();
 	InitializeGame();
 	Draw();
@@ -860,12 +853,11 @@ function main()
 
 function Draw(timestamp)
 {
-	console.log("Draw...");
 	//window.requestAnimationFrame(Draw);
 
 	// 중간에 값이 변경되면 맵이 깨지므로 처음의 변수 값들을 미리 기록해둔다.
-	_ScreenWidth = document.body.clientWidth;
-	_ScreenHeight = document.body.clientHeight;
+	_ScreenWidth = canvas.width;
+	_ScreenHeight = canvas.height;
 	_TileSize = TileSize;
 	_CameraPosition = CameraPosition.slice();
 	_V = V.slice();
@@ -877,6 +869,9 @@ function Draw(timestamp)
 		DrawMap();
 		canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 		canvas.getContext("2d").drawImage(bf, 0, 0);
+		canvas.style.width = document.body.clientWidth + "px";
+		canvas.style.height = document.body.clientHeight + "px";
+		canvas.getContext("2d").scale(RetinaScale, RetinaScale);
 		if (IsRedrawingNeeded)
 			IsAdditionalDrawingNeeded = true;
 		else
@@ -901,7 +896,6 @@ function DrawMap()
 	let temp = [];
 	let a0 = _TileSize;
 	let x0, y0;
-	console.log(_ScreenWidth, _ScreenHeight, _TileSize);
 	for (let i = -1; i < _ScreenWidth / _TileSize + 2; i++)
 	{
 		for (let j = -1; j < _ScreenHeight * 2 / Math.sqrt(3) / _TileSize + 1; j++)
@@ -945,7 +939,6 @@ function DrawMap()
 										[(x0 + a0 / 2.0), (y0 - a0 / 2.0 / Math.sqrt(3))],
 										[x0, (y0 - a0 / Math.sqrt(3))] ];
 			bmg.fillStyle = c;
-			//console.log(c);
 			bmg.beginPath();
 			bmg.moveTo(pts[0][0], pts[0][1]);
 			for (let k = 1; k < 6; k++)
@@ -981,7 +974,6 @@ function DrawMap()
 let LoadingIncrement = 0;
 function DrawLoadingScreen()
 {
-	console.log("DrawLoadingScreen...");
 	let str = "Loading.";
 	let i = LoadingIncrement;
 	bmg.clearRect(0, 0, bf.width, bf.height);
@@ -1071,7 +1063,6 @@ function FromHSV(Hue, Saturation, Value)
 
 async function InitializeGame()
 {
-	console.log("InitializeGame...");
 	map = new Map(MAPWIDTH);
 	CameraPosition = [map.PlayerPosition[0] * TileSize + TileSize / 2 * (Mod(map.PlayerPosition[1], 2) + 1),
 					AB(map.PlayerPosition[1] * TileSize * Math.sqrt(3) / 2 + TileSize * Math.sqrt(3) / 4, document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2 + 1)];
