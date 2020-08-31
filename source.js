@@ -848,7 +848,7 @@ function main()
 		bmg.scale(RetinaScale, RetinaScale);
 		//let DrawingThread = setInterval(DrawLoadingScreen, 500);
 		//DrawLoadingScreen();
-		//RegisterEvents();
+		RegisterEvents();
 		InitializeGame();
 		Draw();
 	}
@@ -858,7 +858,7 @@ function main()
 	}
 	//clearInterval(DrawingThread);
 }
-/*
+
 function RegisterEvents()
 {
 	bf.addEventListener("touchstart", TouchStart, false);
@@ -869,6 +869,7 @@ function RegisterEvents()
 function TouchStart(evt)
 {
 	evt.preventDefault();
+	alert("touchstart");
 	var touches = evt.changedTouches;
 		  
 	if (touches.length > 0)
@@ -906,7 +907,7 @@ function TouchEnd(evt)
 		IsMouseDown = false;
 	}
 }
-*/
+
 function Draw()
 {
 	//window.requestAnimationFrame(Draw);
