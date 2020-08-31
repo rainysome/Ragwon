@@ -932,6 +932,10 @@ function TouchEnd(evt)
 	{
 		IsMouseDown = false;
 	}
+	else if (touches.length >= 1)
+	{
+		OldMouse = [touches[0].pageX, touches[0].pageY];
+	}
 }
 
 function Draw()
