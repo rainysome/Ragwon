@@ -874,7 +874,6 @@ function TouchStart(evt)
 {
 	evt.preventDefault();
 	var touches = evt.changedTouches;
-	console.log(touches);
 	if (touches.length >= 1)
 	{
 		IsMouseDown = true;
@@ -950,7 +949,6 @@ function Draw()
 	// 속도를 업데이트해준다.
 	if (!IsMouseDown)
 	{
-		console.log(V);
 		V[0] *= 0.9;
 		V[1] *= 0.9;
 		if (V[0] < 1 && V[0] > -1)
@@ -967,7 +965,6 @@ function Draw()
 	{
 		V = [0.0, 0.0];
 	}
-	console.log(IsRedrawingNeeded);
 	// 다시 그려야 하거나 한 프레임 더 그려야 하면 맵부터 그리고 타일 선택된거 그리고 문명 그리고 인터페이스도 그린다.
 	if (IsRedrawingNeeded || IsAdditionalDrawingNeeded)
 	{
@@ -977,6 +974,7 @@ function Draw()
 		canvas.getContext("2d").clearRect(0, 0, _ScreenWidth, _ScreenHeight);
 		canvas.getContext("2d").drawImage(bf, 0, 0);
 		*/
+		DrawDebug();
 		if (IsRedrawingNeeded)
 			IsAdditionalDrawingNeeded = true;
 		else
@@ -1076,6 +1074,16 @@ function DrawMap()
 		bmg.lineTo(RiverLines[i][1][0], RiverLines[i][1][1]);
 	}
 	bmg.stroke();
+}
+
+function DrawDebug()
+{
+	bmg.font = "bold 10px sans-serif";
+	let metric = bmg.measureText(`${OldMouse}, ${OldSecondMouse}`);
+	bmg.fillStyle = "rgba(255, 255, 255, 0.5)";
+	bmg.fillRect(0, 0, metric.width + 10, 15);
+	bmg.fillStyle = "black";
+	bmg.fillText(`${OldMouse}, ${OldSecondMouse}`, 5, 10);
 }
 /*
 let LoadingIncrement = 0;
