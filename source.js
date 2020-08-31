@@ -918,6 +918,8 @@ function TouchMove(evt)
 		CameraPosition[0] = Mod(r * CameraPosition[0] + (1 - r) * (document.body.clientWidth / 2 - viewx), map.Width * TileSize);
 		CameraPosition[1] = AB(r * CameraPosition[1] + (1 - r) * (document.body.clientHeight / 2 - viewy), document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2);
 		//Draw();
+		OldMouse = [touches[0].pageX, touches[0].pageY];
+		OldSecondMouse = [touches[1].pageX, touches[1].pageY];
 		IsRedrawingNeeded = true;
 	}
 }
