@@ -873,7 +873,7 @@ function RegisterEvents()
 function TouchStart(evt)
 {
 	evt.preventDefault();
-	var touches = evt.changedTouches;
+	var touches = evt.touches;
 	if (touches.length >= 1)
 	{
 		IsMouseDown = true;
@@ -891,7 +891,7 @@ function TouchStart(evt)
 function TouchMove(evt)
 {
 	evt.preventDefault();
-	var touches = evt.changedTouches;
+	var touches = evt.touches;
 
 	if (touches.length == 1)
 	{
@@ -926,15 +926,20 @@ function TouchMove(evt)
 function TouchEnd(evt)
 {
 	evt.preventDefault();
-	var touches = evt.changedTouches;
+	var touches = evt.touches;
 
 	if (touches.length == 0)
 	{
 		IsMouseDown = false;
 	}
-	else if (touches.length >= 1)
+	else if (touches.length == 1)
 	{
 		OldMouse = [touches[0].pageX, touches[0].pageY];
+	}
+	else if (touches.length >= 2)
+	{
+		OldMouse = [touches[0].pageX, touches[0].pageY];
+		OldSecondMouse = [touches[1].pageX, touches[1].pageY];
 	}
 }
 
