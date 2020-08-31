@@ -54,6 +54,7 @@ const MAPWIDTH = 180;
 let IsMouseDown = false;
 
 let OldMouse = [0, 0];
+let OldSecondMouse = [0, 0];
 let ToggleView = ToggleViewMode.ByTerrain;
 
 function AngleOffset(y)
@@ -866,6 +867,7 @@ function RegisterEvents()
 	bf.addEventListener("touchstart", TouchStart, false);
 	bf.addEventListener("touchend", TouchEnd, false);
 	bf.addEventListener("touchmove", TouchMove, false);
+	bf.addEventListener("touchcancel", TouchEnd, false);
 }
 
 function TouchStart(evt)
@@ -873,13 +875,17 @@ function TouchStart(evt)
 	evt.preventDefault();
 	var touches = evt.changedTouches;
 	console.log(touches);
-	if (touches.length > 0)
+	if (touches.length >= 1)
 	{
 		IsMouseDown = true;
 		OldMouse[0] = touches[0].pageX;
 		OldMouse[1] = touches[0].pageY;
 		V[0] = 0.0;
 		V[1] = 0.0;
+	}
+	if (touches.length >= 2)
+	{
+		OldSecondMouse = [touches[1].pageX, touches[1].pageY];
 	}
 }
 
@@ -888,12 +894,30 @@ function TouchMove(evt)
 	evt.preventDefault();
 	var touches = evt.changedTouches;
 
-	if (touches.length > 0)
+	if (touches.length == 1)
 	{
 		V[0] = OldMouse[0] - touches[0].pageX;
 		V[1] = OldMouse[1] - touches[0].pageY;
 		ScrollMap(V[0], V[1]);
 		OldMouse = [touches[0].pageX, touches[0].pageY];
+		IsRedrawingNeeded = true;
+	}
+	else if (touches.length >= 2)
+	{
+		let newdx = touches[0].pageX - touches[1].pageX;
+		let newdy = touches[0].pageY - touches[1].pageY;
+		let olddx = OldMouse[0] - OldSecondMouse[0];
+		let olddy = OldMouse[1] - OldSecondMouse[1];
+
+		let viewx = (touches[0].pageX + touches[1].pageX) / 2;
+		let viewy = (touches[0].pageY + touches[1].pageY) / 2;
+		
+		let NewTileSize = AB(TileSize * Math.sqrt((newdx * newdx + newdy * newdy) / (olddx * olddx + olddy * olddy)), document.body.clientHeight / (map.Height + 1) * 2 / Math.sqrt(3), 300);
+		let r = NewTileSize / TileSize;
+		TileSize = NewTileSize;
+		CameraPosition[0] = Mod(r * CameraPosition[0] + (1 - r) * (document.body.clientWidth / 2 - viewx), map.Width * TileSize);
+		CameraPosition[1] = AB(r * CameraPosition[1] + (1 - r) * (document.body.clientHeight / 2 - viewy), document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2);
+		//Draw();
 		IsRedrawingNeeded = true;
 	}
 }
@@ -903,7 +927,7 @@ function TouchEnd(evt)
 	evt.preventDefault();
 	var touches = evt.changedTouches;
 
-	if (touches.length > 0)
+	if (touches.length == 0)
 	{
 		IsMouseDown = false;
 	}
