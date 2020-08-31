@@ -908,14 +908,14 @@ function TouchMove(evt)
 		let olddx = OldMouse[0] - OldSecondMouse[0];
 		let olddy = OldMouse[1] - OldSecondMouse[1];
 
-		let viewx = (touches[0].pageX + touches[1].pageX) / 2;
-		let viewy = (touches[0].pageY + touches[1].pageY) / 2;
+		let viewdx = (OldMouse[0] + OldSecondMouse[0] - touches[0].pageX - touches[1].pageX) / 2;
+		let viewdy = (OldMouse[1] + OldSecondMouse[1] - touches[0].pageY - touches[1].pageY) / 2;
 		
 		let NewTileSize = AB(TileSize * Math.sqrt((newdx * newdx + newdy * newdy) / (olddx * olddx + olddy * olddy)), document.body.clientHeight / (map.Height + 1) * 2 / Math.sqrt(3), 300);
 		let r = NewTileSize / TileSize;
 		TileSize = NewTileSize;
-		CameraPosition[0] = Mod(r * CameraPosition[0] + (1 - r) * (document.body.clientWidth / 2 - viewx), map.Width * TileSize);
-		CameraPosition[1] = AB(r * CameraPosition[1] + (1 - r) * (document.body.clientHeight / 2 - viewy), document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2);
+		CameraPosition[0] = Mod(r * CameraPosition[0] + viewdx, map.Width * TileSize);
+		CameraPosition[1] = AB(r * CameraPosition[1] + viewdy, document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2);
 		//Draw();
 		OldMouse = [touches[0].pageX, touches[0].pageY];
 		OldSecondMouse = [touches[1].pageX, touches[1].pageY];
