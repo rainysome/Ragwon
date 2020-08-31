@@ -850,6 +850,8 @@ function main()
 		//DrawLoadingScreen();
 		RegisterEvents();
 		InitializeGame();
+
+		IsRedrawingNeeded = true;
 		Draw();
 	}
 	catch (error)
@@ -869,9 +871,8 @@ function RegisterEvents()
 function TouchStart(evt)
 {
 	evt.preventDefault();
-	alert("touchstart");
 	var touches = evt.changedTouches;
-		  
+	console.log(touches);
 	if (touches.length > 0)
 	{
 		IsMouseDown = true;
@@ -891,7 +892,7 @@ function TouchMove(evt)
 	{
 		V[0] = OldMouse[0] - touches[0].pageX;
 		V[1] = OldMouse[1] - touches[0].pageY;
-		ScrollMap(V.X, V.Y);
+		ScrollMap(V[0], V[1]);
 		OldMouse = [touches[0].pageX, touches[0].pageY];
 		IsRedrawingNeeded = true;
 	}
@@ -910,7 +911,7 @@ function TouchEnd(evt)
 
 function Draw()
 {
-	//window.requestAnimationFrame(Draw);
+	window.requestAnimationFrame(Draw);
 
 	// 중간에 값이 변경되면 맵이 깨지므로 처음의 변수 값들을 미리 기록해둔다.
 	_ScreenWidth = document.body.clientWidth;
@@ -918,11 +919,12 @@ function Draw()
 	_TileSize = TileSize;
 	_CameraPosition = CameraPosition.slice();
 	_V = V.slice();
-	IsRedrawingNeeded = true;
-	/*
+	//IsRedrawingNeeded = true;
+	
 	// 속도를 업데이트해준다.
 	if (!IsMouseDown)
 	{
+		console.log(V);
 		V[0] *= 0.9;
 		V[1] *= 0.9;
 		if (V[0] < 1 && V[0] > -1)
@@ -939,7 +941,7 @@ function Draw()
 	{
 		V = [0.0, 0.0];
 	}
-	*/
+	console.log(IsRedrawingNeeded);
 	// 다시 그려야 하거나 한 프레임 더 그려야 하면 맵부터 그리고 타일 선택된거 그리고 문명 그리고 인터페이스도 그린다.
 	if (IsRedrawingNeeded || IsAdditionalDrawingNeeded)
 	{
@@ -1116,13 +1118,13 @@ function FromLegend(mode, value)
 	else
 		return "black";
 }
-/*
+
 function ScrollMap(dx, dy)
 {
 	CameraPosition[0] = Mod(CameraPosition[0] + dx, map.Width * TileSize);
 	CameraPosition[1] = AB(CameraPosition[1] + dy, document.body.clientHeight / 2 - TileSize * Math.sqrt(3) / 4, (map.Height + 0.5) * TileSize * Math.sqrt(3) / 2 - document.body.clientHeight / 2);
 }
-*/
+
 function FromHSV(Hue, Saturation, Value)
 {
 	let H = Mod(Hue / 60, 6);
